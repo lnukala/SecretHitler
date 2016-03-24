@@ -14,12 +14,16 @@ func main() {
 		return "Hello world!"
 	})
 	//m.Run()
+
 	var wg sync.WaitGroup
 	wg.Add(2)
-	/*m.Run()*/
 	go zmq.ClientSetupSUB("127.0.0.1", "topic")
 	channel := zmq.ServerSetupPUB()
 	time.Sleep(1000 * time.Millisecond)
 	channel <- "topic!@#$%%$#@!hello"
+
+	channel1 := zmq.ClientSetupREQ("127.0.0.1")
+	time.Sleep(1000 * time.Millisecond)
+	channel1 <- "test"
 	wg.Wait()
 }

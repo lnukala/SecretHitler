@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	zeromq "github.com/pebbe/zmq4"
 )
@@ -60,29 +61,44 @@ func publishMessage(channel chan string, socket *zeromq.Socket) {
 	}
 }
 
-/*ClientSetupREQ : Setting up the zmq client to send a message to concerned node*/
-func ClientSetupREQ(ip string) {
+/*ClientSetupREQ : Setting up the zmq client to send a message
+  to concerned node*/
+func ClientSetupREQ(ip string) chan string {
 	context, _ := zeromq.NewContext()
 	socket, _ := context.NewSocket(zeromq.REQ)
 	socket.SetSndtimeo(50) //wait 50 milliseconds to send the message
-	socket.SetIdentity("username")
 	//defer socket.Close()
 	socket.Connect("tcp://" + ip + ":5555")
 	fmt.Printf("Connected to " + ip)
 
-	msg := "Hello world!"
-	//_, err := socket.Send(msg, 0)
-	_, err := socket.SendMessage(GetPublicIP(), msg)
-	if err != nil {
-		println("Message can not be sent")
-		return
-	}
-	println("Sending ", "hello, you there?")
-	reply, _ := socket.Recv(0)
-	println("Received at client ", string(reply))
+	requestChannel := make(chan string)
+	go receiveRequest(requestChannel, socket)
+	return requestChannel
 }
 
-/*ClientSetupSUB : Setting up the zmq client to send a message to concerned node*/
+/* receiveRequest : handle incoming requests on the channel concerned*/
+func receiveRequest(channel chan string, socket *zeromq.Socket) {
+	defer socket.Close()
+	socket.SetRcvtimeo(5000 * time.Millisecond)
+	for {
+		msg := <-channel
+		_, err := socket.SendMessage(GetPublicIP(), msg)
+		if err != nil {
+			println("Message can not be sent")
+			return
+		}
+		println("Sending " + msg)
+		reply, err := socket.Recv(0)
+		if err != nil {
+			println("Did not receive response from server. " + err.Error())
+		} else {
+			println("Received at client ", string(reply))
+		}
+	}
+}
+
+/*ClientSetupSUB : Setting up the zmq client to send a message
+  to concerned node*/
 func ClientSetupSUB(ip string, topic string) {
 	context, _ := zeromq.NewContext()
 	socket, _ := context.NewSocket(zeromq.SUB)
@@ -102,16 +118,6 @@ func ClientSetupSUB(ip string, topic string) {
 		println("message received = " + messagedata)
 	}
 }
-
-/*func Request(ip string, message *string) {
-	if socket.Send([]byte(msg), 0) == EAGAIN {
-		println("Message can not be sent")
-		return
-	}
-	println("Sending ", msg)
-	reply, _ := socket.Recv(0)
-	println("Received ", string(reply))
-}*/
 
 //GetPublicIP : get public ip of your machine
 func GetPublicIP() string {
