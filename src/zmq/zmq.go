@@ -77,7 +77,7 @@ func ClientSetupREQ(ip string) chan string {
 }
 
 /* receiveRequest : handle incoming requests on the channel concerned*/
-func receiveRequest(channel chan string, socket *zeromq.Socket) {
+func receiveRequest(channel chan string, socket *zeromq.Socket) (string, error) {
 	defer socket.Close()
 	socket.SetRcvtimeo(5000 * time.Millisecond)
 	for {
@@ -85,15 +85,16 @@ func receiveRequest(channel chan string, socket *zeromq.Socket) {
 		_, err := socket.SendMessage(GetPublicIP(), msg)
 		if err != nil {
 			println("Message can not be sent")
-			return
+			return err.Error(), err
 		}
 		println("Sending " + msg)
 		reply, err := socket.Recv(0)
 		if err != nil {
 			println("Did not receive response from server. " + err.Error())
-		} else {
-			println("Received at client ", string(reply))
+			return err.Error(), err
 		}
+		println("Received at client ", string(reply))
+		return reply, nil
 	}
 }
 
