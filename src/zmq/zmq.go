@@ -162,12 +162,12 @@ func SendREQ(message string, channels RequestChannels) Request {
 	return response
 }
 
-//GetREQmessage : return the message in the request struct
-func (f *Request) GetREQmessage() string {
+//Getmessage : return the message in the request struct
+func (f *Request) Getmessage() string {
 	return f.message
 }
 
-//GetREQerror : return the error in the request struct
-func (f *Request) GetREQerror() error {
+//Geterror : return the error in the request struct
+func (f *Request) Geterror() error {
 	return f.err
 }

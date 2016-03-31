@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dnsimple"
 	"sync"
 	"time"
 	"zmq"
@@ -15,6 +16,18 @@ func main() {
 	})
 	//m.Run()
 
+	client := dnsimple.GetClient()
+	dnsimple.PrintDomains(client)
+	dnsimple.GetRecords(client)
+	dnsimple.AddRecord(client, "test")
+	for {
+		if len(dnsimple.GetRecords(client)) == 0 {
+			time.Sleep(30 * 1000 * time.Millisecond)
+		} else {
+			break
+		}
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go zmq.ClientSetupSUB("127.0.0.1", "topic")
@@ -26,6 +39,6 @@ func main() {
 	chans := zmq.ClientSetupREQ("127.0.0.1")
 	time.Sleep(1000 * time.Millisecond)
 	response := zmq.SendREQ("test", chans)
-	print(response.GetREQmessage())
+	print(response.Getmessage())
 	wg.Wait()
 }

@@ -6,6 +6,7 @@ need to execute the following commands from your go path directory:
 (Please make sure you have a bin dir in your go path)
 
 go install zmq
+go install dnsimple
 go install backend
 
 then, to run the program,
