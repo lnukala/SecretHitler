@@ -1,27 +1,24 @@
 package main
 
 import (
+	api "apiserver"
 	"dnsimple"
 	"sync"
 	"time"
 	"zmq"
-
-	"github.com/go-martini/martini"
 )
 
 func main() {
-	m := martini.Classic()
-	m.Get("/", func() string {
-		return "Hello world!"
-	})
-	//m.Run()
+
+	s := api.GetServer()
+	go s.RunServer()
 
 	client := dnsimple.GetClient()
 	dnsimple.PrintDomains(client)
 	dnsimple.GetRecords(client)
 	dnsimple.AddRecord(client, "test")
 	for {
-		if len(dnsimple.GetRecords(client)) == 0 {
+		if rec := dnsimple.GetRecords(client); len(rec) == 0 {
 			time.Sleep(30 * 1000 * time.Millisecond)
 		} else {
 			break
