@@ -97,7 +97,8 @@ func ClientSetupREQ(ip string) RequestChannels {
 }
 
 /* receiveRequest : handle incoming requests on the channel concerned*/
-func receiveRequest(channelReceive chan string, channelReturn chan Request, socket *zeromq.Socket) {
+func receiveRequest(channelReceive chan string, channelReturn chan Request,
+	socket *zeromq.Socket) {
 	defer socket.Close()
 	socket.SetRcvtimeo(5000 * time.Millisecond)
 	for {
