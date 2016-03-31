@@ -10,7 +10,7 @@ go install backend
 
 then, to run the program,
 
-$GOPATH/bin/hello
+$GOPATH/bin/backed
 
 EXTRA NOTES:
 if you are new to go, you might want to set your gopath in your bashrc. to get
