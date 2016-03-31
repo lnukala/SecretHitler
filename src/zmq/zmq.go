@@ -11,6 +11,22 @@ import (
 	zeromq "github.com/pebbe/zmq4"
 )
 
+/*Request :returning both the message data and the error*/
+type Request struct {
+	message string
+	err     error
+}
+
+/*RequestChannels :struct containing the input and output channels tuple*/
+type RequestChannels struct {
+	inputchan  chan string
+	outputchan chan Request
+}
+
+//Delimiter :used to separate the topic and the message data received in the
+//channel
+const Delimiter = "!@#$%%$#@!"
+
 /*ServerSetupREP :Setting up the zmq server to receive requests
   and handle them*/
 func ServerSetupREP() {
@@ -47,23 +63,26 @@ func ServerSetupPUB() chan string {
 /*publishMessage : Listen on a channel and send the message that is received*/
 func publishMessage(channel chan string, socket *zeromq.Socket) {
 	defer socket.Close()
-	messageDelimiter := "!@#$%%$#@!"
 	for {
 		message := <-channel
-		entries := strings.Split(message, messageDelimiter)
-		topic := entries[0]
-		messagedata := entries[1]
-		println("topic = " + topic + " and message = " + messagedata)
-		_, err := socket.SendMessage(topic, messagedata)
-		if err != nil {
-			print("unable to send message " + messagedata)
+		if strings.Contains(message, Delimiter) == false {
+			println("delimiter not present!")
+		} else {
+			entries := strings.Split(message, Delimiter)
+			topic := entries[0]
+			messagedata := entries[1]
+			println("topic = " + topic + " and message = " + messagedata)
+			_, err := socket.SendMessage(topic, messagedata)
+			if err != nil {
+				println("unable to send message " + messagedata + " error = " + err.Error())
+			}
 		}
 	}
 }
 
 /*ClientSetupREQ : Setting up the zmq client to send a message
   to concerned node*/
-func ClientSetupREQ(ip string) chan string {
+func ClientSetupREQ(ip string) RequestChannels {
 	context, _ := zeromq.NewContext()
 	socket, _ := context.NewSocket(zeromq.REQ)
 	socket.SetSndtimeo(50) //wait 50 milliseconds to send the message
@@ -72,29 +91,30 @@ func ClientSetupREQ(ip string) chan string {
 	fmt.Printf("Connected to " + ip)
 
 	requestChannel := make(chan string)
-	go receiveRequest(requestChannel, socket)
-	return requestChannel
+	returnChannel := make(chan Request)
+	go receiveRequest(requestChannel, returnChannel, socket)
+	return RequestChannels{inputchan: requestChannel, outputchan: returnChannel}
 }
 
 /* receiveRequest : handle incoming requests on the channel concerned*/
-func receiveRequest(channel chan string, socket *zeromq.Socket) (string, error) {
+func receiveRequest(channelReceive chan string, channelReturn chan Request, socket *zeromq.Socket) {
 	defer socket.Close()
 	socket.SetRcvtimeo(5000 * time.Millisecond)
 	for {
-		msg := <-channel
+		msg := <-channelReceive
 		_, err := socket.SendMessage(GetPublicIP(), msg)
 		if err != nil {
 			println("Message can not be sent")
-			return err.Error(), err
+			channelReturn <- Request{message: "", err: err}
 		}
 		println("Sending " + msg)
 		reply, err := socket.Recv(0)
 		if err != nil {
 			println("Did not receive response from server. " + err.Error())
-			return err.Error(), err
+			channelReturn <- Request{message: reply, err: err}
 		}
-		println("Received at client ", string(reply))
-		return reply, nil
+		//println("Received at client ", string(reply))
+		channelReturn <- Request{message: reply, err: err}
 	}
 }
 
@@ -132,4 +152,21 @@ func GetPublicIP() string {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
 	return buf.String()
+}
+
+//SendREQ :Accepts mesage to be sent to the concerned servers
+func SendREQ(message string, channels RequestChannels) Request {
+	channels.inputchan <- message
+	response := <-channels.outputchan
+	return response
+}
+
+//GetREQmessage : return the message in the request struct
+func (f *Request) GetREQmessage() string {
+	return f.message
+}
+
+//GetREQerror : return the error in the request struct
+func (f *Request) GetREQerror() error {
+	return f.err
 }

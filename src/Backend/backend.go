@@ -20,10 +20,12 @@ func main() {
 	go zmq.ClientSetupSUB("127.0.0.1", "topic")
 	channel := zmq.ServerSetupPUB()
 	time.Sleep(1000 * time.Millisecond)
-	channel <- "topic!@#$%%$#@!hello"
+	channel <- "topic" + zmq.Delimiter + "hello"
 
-	channel1 := zmq.ClientSetupREQ("127.0.0.1")
+	go zmq.ServerSetupREP()
+	chans := zmq.ClientSetupREQ("127.0.0.1")
 	time.Sleep(1000 * time.Millisecond)
-	channel1 <- "test"
+	response := zmq.SendREQ("test", chans)
+	print(response.GetREQmessage())
 	wg.Wait()
 }
