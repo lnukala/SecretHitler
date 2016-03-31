@@ -152,7 +152,7 @@ func GetPublicIP() string {
 	defer resp.Body.Close()
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(resp.Body)
-	return buf.String()
+	return string(buf.String()[0 : len(buf.String())-1])
 }
 
 //SendREQ :Accepts mesage to be sent to the concerned servers

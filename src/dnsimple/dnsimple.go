@@ -3,6 +3,7 @@ package dnsimple
 import (
 	"fmt"
 	"log"
+	"strings"
 	"zmq"
 
 	DNS "github.com/rubyist/go-dnsimple"
@@ -31,6 +32,7 @@ func PrintDomains(client *DNS.DNSimpleClient) {
 	}
 }
 
+//GetRecords :Get the A records associated with a domain
 func GetRecords(client *DNS.DNSimpleClient) []DNS.Record {
 	records, err := client.Records(Domain, "", "A")
 	if err != nil {
@@ -43,8 +45,23 @@ func GetRecords(client *DNS.DNSimpleClient) []DNS.Record {
 	return records
 }
 
+//AddRecord :Add an a record against a domain
 func AddRecord(client *DNS.DNSimpleClient, recordname string) {
 	ip := zmq.GetPublicIP()
 	newRec := DNS.Record{Name: recordname, Content: ip, RecordType: "A"}
 	client.CreateRecord(Domain, newRec)
+}
+
+//DeleteRecord :Delete the record entered for an IP
+func DeleteRecord(client *DNS.DNSimpleClient, ip string) {
+	records, err := client.Records(Domain, "", "A")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, record := range records {
+		if strings.Compare(ip, record.Content) == 0 {
+			record.Delete(client)
+			return
+		}
+	}
 }
