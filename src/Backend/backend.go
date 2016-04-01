@@ -11,7 +11,7 @@ import (
 func main() {
 
 	s := api.GetServer()
-	go s.RunServer()
+	go s.RunServer() // run the server in new thread
 
 	client := dnsimple.GetClient()
 	dnsimple.PrintDomains(client)
