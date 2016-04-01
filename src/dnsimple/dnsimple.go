@@ -3,6 +3,7 @@ package dnsimple
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"zmq"
 
@@ -23,6 +24,7 @@ func GetClient() *DNS.DNSimpleClient {
 //PrintDomains : List the domains under the concerned client
 func PrintDomains(client *DNS.DNSimpleClient) {
 	// Get a list of your domains (with error management)
+	fmt.Println("[dnsimple] Printing domains")
 	domains, error := client.Domains()
 	if error != nil {
 		log.Fatalln(error)
@@ -36,12 +38,13 @@ func PrintDomains(client *DNS.DNSimpleClient) {
 func GetRecords(client *DNS.DNSimpleClient) []DNS.Record {
 	records, err := client.Records(Domain, "", "A")
 	if err != nil {
+		fmt.Print("[GetRecords] error ")
 		log.Fatal(err)
 	}
 	for _, record := range records {
-		fmt.Printf("Record: %s -> %s\n", record.Name, record.Content)
+		fmt.Printf("[GetRecords] Record: %s -> %s\n", record.Name, record.Content)
 	}
-	print(len(records))
+	fmt.Println("Total: " + strconv.Itoa(len(records)))
 	return records
 }
 
