@@ -32,7 +32,8 @@ func main() {
 	}
 
 	fmt.Println("Step2: Deleting all the records...")
-	for _, record := range records {
+	recordz := dnsimple.GetRecords(client)
+	for _, record := range recordz {
 		record.Delete(client)
 	}
 
