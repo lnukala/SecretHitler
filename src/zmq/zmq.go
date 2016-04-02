@@ -23,6 +23,15 @@ type RequestChannels struct {
 	outputchan chan Request
 }
 
+/*subscriptionData :tuple for managing ip and topic*/
+type subscriptionData struct {
+	ip    string
+	topic string
+}
+
+//SubscriptionState :used to keep track of the ip and topics subscribed to
+var SubscriptionState = map[subscriptionData]bool{}
+
 //Delimiter :used to separate the topic and the message data received in the
 //channel
 const Delimiter = "!@#$%%$#@!"
@@ -125,20 +134,29 @@ func ClientSetupSUB(ip string, topic string) {
 	context, _ := zeromq.NewContext()
 	socket, _ := context.NewSocket(zeromq.SUB)
 	defer socket.Close()
+	socket.SetRcvtimeo(500 * time.Millisecond) //wait on the receive call for 5 seconds
 	if len(topic) > 0 {
 		socket.SetSubscribe(topic)
 	}
-	//defer socket.Close()
 	socket.Connect("tcp://" + ip + ":5556")
+	SubscriptionState[subscriptionData{ip: ip, topic: topic}] = true
 	println("Subscribed to " + ip)
 
-	for {
-		message, _ := socket.RecvMessage(0)
-		topicrecv := message[0]
-		messagedata := message[1]
-		println("topic = " + topicrecv)
-		println("message received = " + messagedata)
+	for (SubscriptionState[subscriptionData{ip: ip, topic: topic}] == true) {
+		println(SubscriptionState[subscriptionData{ip: ip, topic: topic}])
+		message, err := socket.RecvMessage(0)
+		if err == nil {
+			topicrecv := message[0]
+			messagedata := message[1]
+			println("topic = " + topicrecv)
+			println("message received = " + messagedata)
+		}
 	}
+}
+
+/*Unsubscribe : ubsubscribe from a topic on an ip*/
+func Unsubscribe(ip string, topic string) {
+	SubscriptionState[subscriptionData{ip: ip, topic: topic}] = false
 }
 
 //GetPublicIP : get public ip of your machine
