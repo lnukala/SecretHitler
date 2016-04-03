@@ -38,6 +38,7 @@ func GetServer() *APIServer {
 
 	// login  return json data including the succes information
 	singleServer.m.Get("/login", func(args martini.Params, r render.Render) {
+
 		r.JSON(http.StatusOK, map[string]interface{}{"success": true})
 	})
 
