@@ -2,12 +2,14 @@ package zmq
 
 import (
 	"bytes"
+	"constants"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/deckarep/golang-set"
 	zeromq "github.com/pebbe/zmq4"
 )
 
@@ -29,12 +31,11 @@ type subscriptionData struct {
 	topic string
 }
 
+//Supernodes :et of the supernodes currently in the system
+var Supernodes = mapset.NewSet()
+
 //SubscriptionState :used to keep track of the ip and topics subscribed to
 var SubscriptionState = map[subscriptionData]bool{}
-
-//Delimiter :used to separate the topic and the message data received in the
-//channel
-const Delimiter = "!@#$%%$#@!"
 
 /*ServerSetupREP :Setting up the zmq server to receive requests
   and handle them*/
@@ -74,10 +75,10 @@ func publishMessage(channel chan string, socket *zeromq.Socket) {
 	defer socket.Close()
 	for {
 		message := <-channel
-		if strings.Contains(message, Delimiter) == false {
+		if strings.Contains(message, constants.Delimiter) == false {
 			println("delimiter not present!")
 		} else {
-			entries := strings.Split(message, Delimiter)
+			entries := strings.SplitN(message, constants.Delimiter, 2)
 			topic := entries[0]
 			messagedata := entries[1]
 			println("topic = " + topic + " and message = " + messagedata)
@@ -150,6 +151,8 @@ func ClientSetupSUB(ip string, topic string) {
 			messagedata := message[1]
 			println("topic = " + topicrecv)
 			println("message received = " + messagedata)
+			input := strings.SplitN(messagedata, constants.Delimiter, 2)
+			Handle(input[0], input[1])
 		}
 	}
 }
@@ -188,4 +191,18 @@ func (f *Request) Getmessage() string {
 //Geterror : return the error in the request struct
 func (f *Request) Geterror() error {
 	return f.err
+}
+
+//Handle :Handle messages received
+func Handle(method string, params string) {
+	switch method {
+	case "promote":
+		Supernodes.Add(params)
+		/// TODO: add logic for handling promotions received
+	case "demote":
+		Supernodes.Remove(params)
+	//TODO: add logic for handling demotions received
+	default:
+		println("No logic added to handle this method. Please check!")
+	}
 }
