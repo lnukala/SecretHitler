@@ -18,7 +18,7 @@ func main() {
 
 	if len(records) == 0 {
 		fmt.Println("No record exists, adding new one...")
-		dnsimple.AddRecord(client, "testrecord")
+		dnsimple.AddRecord(client)
 	}
 
 	for {

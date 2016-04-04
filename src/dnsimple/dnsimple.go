@@ -11,7 +11,7 @@ import (
 )
 
 //Domain :of the game
-const Domain = "secrethitler.ml"
+const Domain = "lnukala.me"
 
 //GetClient :Get the API client for dnssimple
 func GetClient() *DNS.DNSimpleClient {
@@ -49,9 +49,9 @@ func GetRecords(client *DNS.DNSimpleClient) []DNS.Record {
 }
 
 //AddRecord :Add an a record against a domain
-func AddRecord(client *DNS.DNSimpleClient, recordname string) {
+func AddRecord(client *DNS.DNSimpleClient) {
 	ip := zmq.GetPublicIP()
-	newRec := DNS.Record{Name: recordname, Content: ip, RecordType: "A"}
+	newRec := DNS.Record{Name: "secrethitler", Content: ip, RecordType: "A"}
 	client.CreateRecord(Domain, newRec)
 }
 

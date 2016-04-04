@@ -52,10 +52,9 @@ func ServerSetupREP() {
 		sourceIP = strings.Replace(sourceIP, "\n", "", 1)
 		print("Message received at server from ", sourceIP)
 		println(", message: ", msg[1])
-
-		// send reply back to client
-		reply := fmt.Sprintf("Sorry, I dont have an answer for that")
-		socket.Send(reply, 0)
+		//Handle the request received
+		input := strings.SplitN(msg[1], constants.Delimiter, 2)
+		Handle(input[0], input[1])
 	}
 }
 
@@ -196,12 +195,14 @@ func (f *Request) Geterror() error {
 //Handle :Handle messages received
 func Handle(method string, params string) {
 	switch method {
-	case "promote":
+	case "promoteREQ":
 		Supernodes.Add(params)
-		/// TODO: add logic for handling promotions received
+		/// TODO: add logic for handling promotions requests received (send promotionREP)
+	case "promoteREP":
+		///TODO: Add logic for handling responses to promotion requests
 	case "demote":
 		Supernodes.Remove(params)
-	//TODO: add logic for handling demotions received
+		//TODO: add logic for handling demotions requests received
 	default:
 		println("No logic added to handle this method. Please check!")
 	}

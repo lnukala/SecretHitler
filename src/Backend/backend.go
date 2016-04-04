@@ -66,15 +66,15 @@ func Request(ip string, message string) (string, error) {
 }
 
 /*Promote :used to promote a node to supernode*/
-func Promote(userid string) {
+func Promote() {
 	client := dnsimple.GetClient()
 	records := dnsimple.GetRecords(client)
 	//If there are other supernodes in the system, get the state from them
 	for _, record := range records {
 		Subscribe(record.Content, "supernode")
-		Request(record.Content, "promote"+constants.Delimiter+zmq.GetPublicIP())
+		Request(record.Content, "promoteREQ"+constants.Delimiter+zmq.GetPublicIP())
 	}
-	dnsimple.AddRecord(client, userid)
+	dnsimple.AddRecord(client)
 }
 
 /*Demote :demote node (ip) from supernode status*/
