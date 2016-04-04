@@ -3,7 +3,6 @@ package zmq
 import (
 	"bytes"
 	"constants"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -37,13 +36,49 @@ type ZMessage struct {
 }
 
 // GetTag  get tag of message
-func (z ZMessage) GetTag() string {
+func (z *ZMessage) GetTag() string {
 	return z.tag
 }
 
 // GetContent  get content of message
-func (z ZMessage) GetContent() string {
+func (z *ZMessage) GetContent() string {
 	return z.content
+}
+
+// SetTag  get tag of message
+func (z *ZMessage) SetTag(tag string) {
+	z.tag = tag
+}
+
+// SetContent  get content of message
+func (z *ZMessage) SetContent(content string) {
+	z.content = content
+}
+
+//PubMessage :message structure to publish a message
+type PubMessage struct {
+	topic    string
+	zmessage ZMessage
+}
+
+// GetTopic :get tag of message
+func (pmsg *PubMessage) GetTopic() string {
+	return pmsg.topic
+}
+
+// GetMessage :get content of message
+func (pmsg *PubMessage) GetMessage() ZMessage {
+	return pmsg.zmessage
+}
+
+// SetTopic :get tag of message
+func (pmsg *PubMessage) SetTopic(topic string) {
+	pmsg.topic = topic
+}
+
+// SetMessage :get content of message
+func (pmsg *PubMessage) SetMessage(zmessage ZMessage) {
+	pmsg.zmessage = zmessage
 }
 
 //SubscriptionState :used to keep track of the ip and topics subscribed to
@@ -65,7 +100,7 @@ func ServerSetupREP() {
 		msg, _ := socket.RecvMessage(0)
 		sourceIP := msg[0]
 		sourceIP = strings.Replace(sourceIP, "\n", "", 1)
-		print("Message received at server from ", sourceIP)
+		print("[ZMQ] Message received at server from " + sourceIP)
 		println(", message: ", msg[1])
 		socket.Send("ACK", 0)
 		//Handle the request received
@@ -76,31 +111,26 @@ func ServerSetupREP() {
 
 /*ServerSetupPUB :Setting up the zmq publish server that returns a channel to
   write to */
-func ServerSetupPUB() chan string {
+func ServerSetupPUB() chan PubMessage {
 	context, _ := zeromq.NewContext()
 	socket, _ := context.NewSocket(zeromq.PUB)
 	socket.Bind("tcp://*:5556")
-	pubChannel := make(chan string)
+	pubChannel := make(chan PubMessage)
 	go publishMessage(pubChannel, socket)
 	return pubChannel
 }
 
 /*publishMessage : Listen on a channel and send the message that is received*/
-func publishMessage(channel chan string, socket *zeromq.Socket) {
+func publishMessage(channel chan PubMessage, socket *zeromq.Socket) {
 	defer socket.Close()
 	for {
 		message := <-channel
-		if strings.Contains(message, constants.Delimiter) == false {
-			println("delimiter not present!")
-		} else {
-			entries := strings.SplitN(message, constants.Delimiter, 2)
-			topic := entries[0]
-			messagedata := entries[1]
-			println("topic = " + topic + " and message = " + messagedata)
-			_, err := socket.SendMessage(topic, messagedata)
-			if err != nil {
-				println("unable to send message " + messagedata + " error = " + err.Error())
-			}
+		topic := message.GetTopic()
+		zmessage := message.GetMessage()
+		messagedata := zmessage.GetTag() + constants.Delimiter + zmessage.GetContent()
+		_, err := socket.SendMessage(topic, messagedata)
+		if err != nil {
+			println("[ZMQ] unable to send message. Error = " + err.Error())
 		}
 	}
 }
@@ -113,8 +143,7 @@ func ClientSetupREQ(ip string) RequestChannels {
 	socket.SetSndtimeo(50) //wait 50 milliseconds to send the message
 	//defer socket.Close()
 	socket.Connect("tcp://" + ip + ":5555")
-	fmt.Printf("Connected to " + ip)
-
+	println("[ZMQ] Connected to " + ip)
 	requestChannel := make(chan string)
 	returnChannel := make(chan Request)
 	go receiveRequest(requestChannel, returnChannel, socket)
@@ -130,16 +159,14 @@ func receiveRequest(channelReceive chan string, channelReturn chan Request,
 		msg := <-channelReceive
 		_, err := socket.SendMessage(GetPublicIP(), msg)
 		if err != nil {
-			println("Message can not be sent")
+			println("[ZMQ] Message can not be sent. " + err.Error())
 			channelReturn <- Request{message: "", err: err}
 		}
-		println("Sending " + msg)
 		reply, err := socket.Recv(0)
 		if err != nil {
-			println("Did not receive response from server. " + err.Error())
+			println("[ZMQ] Did not receive valid response from server. " + err.Error())
 			channelReturn <- Request{message: reply, err: err}
 		}
-		//println("Received at client ", string(reply))
 		channelReturn <- Request{message: reply, err: err}
 	}
 }
@@ -156,15 +183,12 @@ func ClientSetupSUB(ip string, topic string) {
 	}
 	socket.Connect("tcp://" + ip + ":5556")
 	SubscriptionState[subscriptionData{ip: ip, topic: topic}] = true
-	println("[ZMQ]Subscribed to " + ip)
+	println("[ZMQ] Subscribed to " + ip + " on topic '" + topic + "'")
 	for (SubscriptionState[subscriptionData{ip: ip, topic: topic}] == true) {
 		// fmt.Printf("[sub-state] IP:%s Topic:%s -> %t\n", ip, topic, SubscriptionState[subscriptionData{ip: ip, topic: topic}])
 		message, err := socket.RecvMessage(0)
 		if err == nil {
-			topicrecv := message[0]
 			messagedata := message[1]
-			println("topic = " + topicrecv)
-			println("message received = " + messagedata)
 			input := strings.SplitN(messagedata, constants.Delimiter, 2)
 			Handle(input[0], input[1])
 		}

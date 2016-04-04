@@ -13,7 +13,7 @@ import (
 
 /*CommunicationState :the state of the backend comm infra*/
 type CommunicationState struct {
-	PublishChannel  chan string
+	PublishChannel  chan zmq.PubMessage
 	SubscriptionMap map[string]map[string]bool //map of ip to map of topics
 	RequestChanMap  map[string]zmq.RequestChannels
 }
@@ -94,11 +94,11 @@ func syncFrom(ip string) {
 func Demote(ip string) {
 	client := dnsimple.GetClient()
 	dnsimple.DeleteRecord(client, ip)
+	//if you are not the node being demoted
 	if strings.Compare(zmq.GetPublicIP(), ip) != 0 {
-		State.PublishChannel <- "supernode" + constants.Delimiter +
-			"demote" + constants.Delimiter + ip
-		Supernodes.Remove(ip)             //remove from personal set of supernodes
-		UnsubscribeTopic(ip, "supernode") //unsubscribe from the node for control messages
+		Publish("supernode", "demote", ip) //tell everyone to demote the user
+		Supernodes.Remove(ip)              //remove from personal set of supernodes
+		UnsubscribeTopic(ip, "supernode")  //unsubscribe from the node for control messages
 	} else {
 		for supernodeIP := range Supernodes.Iter() {
 			UnsubscribeTopic(supernodeIP.(string), "supernode") //unsubscribe from all supernodes
@@ -109,13 +109,19 @@ func Demote(ip string) {
 
 /*Publish : publish to a topic*/
 func Publish(topic string, method string, params string) {
-	message := topic + constants.Delimiter + method + constants.Delimiter + params
-	State.PublishChannel <- message
+	zmsg := zmq.ZMessage{}
+	zmsg.SetTag(method)
+	zmsg.SetContent(params)
+	pubmsg := zmq.PubMessage{}
+	pubmsg.SetTopic(topic)
+	pubmsg.SetMessage(zmsg)
+	State.PublishChannel <- pubmsg
 }
 
 // Handle  handle all received messages
 func Handle() {
-	for z := range zmq.ReceiveChannel {
+	for {
+		z := <-zmq.ReceiveChannel
 		method := z.GetTag()
 		params := z.GetContent()
 		switch method {
@@ -134,5 +140,4 @@ func Handle() {
 			println("No logic added to handle this method. Please check!")
 		}
 	}
-
 }
