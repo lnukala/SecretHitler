@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deckarep/golang-set"
 	zeromq "github.com/pebbe/zmq4"
 )
 
@@ -31,11 +30,27 @@ type subscriptionData struct {
 	topic string
 }
 
-//Supernodes :et of the supernodes currently in the system
-var Supernodes = mapset.NewSet()
+// ZMessage  message structure
+type ZMessage struct {
+	tag     string
+	content string
+}
+
+// GetTag  get tag of message
+func (z ZMessage) GetTag() string {
+	return z.tag
+}
+
+// GetContent  get content of message
+func (z ZMessage) GetContent() string {
+	return z.content
+}
 
 //SubscriptionState :used to keep track of the ip and topics subscribed to
 var SubscriptionState = map[subscriptionData]bool{}
+
+//ReceiveChannel  :all receivd message goes into this channel
+var ReceiveChannel = make(chan ZMessage)
 
 /*ServerSetupREP :Setting up the zmq server to receive requests
   and handle them*/
@@ -52,6 +67,7 @@ func ServerSetupREP() {
 		sourceIP = strings.Replace(sourceIP, "\n", "", 1)
 		print("Message received at server from ", sourceIP)
 		println(", message: ", msg[1])
+		socket.Send("ACK", 0)
 		//Handle the request received
 		input := strings.SplitN(msg[1], constants.Delimiter, 2)
 		Handle(input[0], input[1])
@@ -128,22 +144,21 @@ func receiveRequest(channelReceive chan string, channelReturn chan Request,
 	}
 }
 
-/*ClientSetupSUB : Setting up the zmq client to send a message
-  to concerned node*/
+/*ClientSetupSUB : Setting up the zmq client to subscribe message
+  from concerned node*/
 func ClientSetupSUB(ip string, topic string) {
 	context, _ := zeromq.NewContext()
 	socket, _ := context.NewSocket(zeromq.SUB)
 	defer socket.Close()
-	socket.SetRcvtimeo(500 * time.Millisecond) //wait on the receive call for 5 seconds
+	socket.SetRcvtimeo(500 * time.Millisecond) //wait on the receive call for .5 seconds
 	if len(topic) > 0 {
 		socket.SetSubscribe(topic)
 	}
 	socket.Connect("tcp://" + ip + ":5556")
 	SubscriptionState[subscriptionData{ip: ip, topic: topic}] = true
-	println("Subscribed to " + ip)
-
+	println("[ZMQ]Subscribed to " + ip)
 	for (SubscriptionState[subscriptionData{ip: ip, topic: topic}] == true) {
-		println(SubscriptionState[subscriptionData{ip: ip, topic: topic}])
+		// fmt.Printf("[sub-state] IP:%s Topic:%s -> %t\n", ip, topic, SubscriptionState[subscriptionData{ip: ip, topic: topic}])
 		message, err := socket.RecvMessage(0)
 		if err == nil {
 			topicrecv := message[0]
@@ -194,16 +209,5 @@ func (f *Request) Geterror() error {
 
 //Handle :Handle messages received
 func Handle(method string, params string) {
-	switch method {
-	case "promoteREQ":
-		Supernodes.Add(params)
-		/// TODO: add logic for handling promotions requests received (send promotionREP)
-	case "promoteREP":
-		///TODO: Add logic for handling responses to promotion requests
-	case "demote":
-		Supernodes.Remove(params)
-		//TODO: add logic for handling demotions requests received
-	default:
-		println("No logic added to handle this method. Please check!")
-	}
+	ReceiveChannel <- ZMessage{tag: method, content: params}
 }

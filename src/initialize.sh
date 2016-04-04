@@ -7,7 +7,7 @@ go install zmq
 go install dnsimple
 go install constants
 go install backend
-go install room
+go install userinfo
 go install apiserver
 go install run
 go install test

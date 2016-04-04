@@ -3,7 +3,6 @@ package dnsimple
 import (
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 	"zmq"
 
@@ -44,7 +43,7 @@ func GetRecords(client *DNS.DNSimpleClient) []DNS.Record {
 	for _, record := range records {
 		fmt.Printf("[GetRecords] Record: %s -> %s\n", record.Name, record.Content)
 	}
-	fmt.Println("Total: " + strconv.Itoa(len(records)))
+	// fmt.Println("Total: " + strconv.Itoa(len(records)))
 	return records
 }
 

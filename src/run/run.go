@@ -3,7 +3,8 @@ package main
 import (
 	api "apiserver"
 	"backend"
-	"time"
+	"constants"
+	"dnsimple"
 	"zmq"
 )
 
@@ -16,14 +17,18 @@ func main() {
 	submap := make(map[string]map[string]bool)
 	backend.State = backend.CommunicationState{PublishChannel: publishchannel,
 		SubscriptionMap: submap, RequestChanMap: channelMap}
+	client := dnsimple.GetClient()
+	for _, rd := range dnsimple.GetRecords(client) {
+		// TODO: Ping each ip:3000/heartbeet
+		// remove dead node from dns
+		println("[run] subscribe to super node " + rd.Content)
+		backend.Subscribe(rd.Content, "subnode")
+	}
 
-	backend.Subscribe("127.0.0.1", "topic")
-	time.Sleep(1000 * time.Millisecond)
-	backend.Publish("topic", "method", "params")
-	time.Sleep(1000 * time.Millisecond)
-	backend.UnsubscribeTopic("127.0.0.1", "topic")
-	time.Sleep(1000 * time.Millisecond)
-	backend.Publish("topic", "method", "params")
-
-	time.Sleep(100000 * time.Millisecond)
+	records := dnsimple.GetRecords(client)
+	if len(records) < constants.MaxSuperNumber {
+		backend.Promote()
+		s.SetSuper(true)
+	}
+	backend.Handle()
 }

@@ -5,6 +5,7 @@ import (
 	"dnsimple"
 	"strings"
 	"time"
+	"userinfo"
 	"zmq"
 
 	"github.com/deckarep/golang-set"
@@ -20,6 +21,9 @@ type CommunicationState struct {
 /*State :the state of the backend communication infra*/
 var State CommunicationState
 
+//Supernodes :et of the supernodes currently in the system
+var Supernodes = mapset.NewSet()
+
 //Subscribe :method to subscribe to a particular topic on a particular ip
 func Subscribe(ip string, topic string) {
 	//check if already subscribed on this ip and topic
@@ -28,7 +32,7 @@ func Subscribe(ip string, topic string) {
 		return
 	}
 	//if not subscribes, subscribe and set the state
-	go zmq.ClientSetupSUB("127.0.0.1", "topic")
+	go zmq.ClientSetupSUB(ip, "topic")
 	if State.SubscriptionMap[ip] == nil {
 		topicmap := make(map[string]bool)
 		topicmap[topic] = true
@@ -53,7 +57,7 @@ func Request(ip string, message string) (string, error) {
 	time.Sleep(500 * time.Millisecond)
 	response := zmq.SendREQ(message, State.RequestChanMap[ip])
 	if response.Geterror() != nil {
-		println(response.Geterror().Error())
+		println("[Backend request]" + response.Geterror().Error())
 	} else {
 		if strings.Contains(message, constants.Delimiter) == false {
 			println("delimiter not present in message received in promote")
@@ -71,10 +75,19 @@ func Promote() {
 	records := dnsimple.GetRecords(client)
 	//If there are other supernodes in the system, get the state from them
 	for _, record := range records {
-		Subscribe(record.Content, "supernode")
+		Supernodes.Add(record.Content)
 		Request(record.Content, "promoteREQ"+constants.Delimiter+zmq.GetPublicIP())
 	}
+	if len(records) > 0 {
+		syncFrom(records[0].Content)
+	}
 	dnsimple.AddRecord(client)
+	Supernodes.Add(zmq.GetPublicIP())
+}
+
+// SyncFrom  pull userinfo from other supernodes
+func syncFrom(ip string) {
+	// TODO: sync userinfor from this server
 }
 
 /*Demote :demote node (ip) from supernode status*/
@@ -84,13 +97,13 @@ func Demote(ip string) {
 	if strings.Compare(zmq.GetPublicIP(), ip) != 0 {
 		State.PublishChannel <- "supernode" + constants.Delimiter +
 			"demote" + constants.Delimiter + ip
-		zmq.Supernodes.Remove(ip)         //remove from personal set of supernodes
+		Supernodes.Remove(ip)             //remove from personal set of supernodes
 		UnsubscribeTopic(ip, "supernode") //unsubscribe from the node for control messages
 	} else {
-		for supernodeIP := range zmq.Supernodes.Iter() {
+		for supernodeIP := range Supernodes.Iter() {
 			UnsubscribeTopic(supernodeIP.(string), "supernode") //unsubscribe from all supernodes
 		}
-		zmq.Supernodes = mapset.NewSet()
+		Supernodes = mapset.NewSet()
 	}
 }
 
@@ -98,4 +111,28 @@ func Demote(ip string) {
 func Publish(topic string, method string, params string) {
 	message := topic + constants.Delimiter + method + constants.Delimiter + params
 	State.PublishChannel <- message
+}
+
+// Handle  handle all received messages
+func Handle() {
+	for z := range zmq.ReceiveChannel {
+		method := z.GetTag()
+		params := z.GetContent()
+		switch method {
+		case "promoteREQ": // params: the IP address
+			Supernodes.Add(params)
+			Subscribe(params, "supernode")
+			userinfo.AddUser(userinfo.User{UID: params, Addr: params, IsSuper: true})
+		case "promoteREP":
+			///TODO: Add logic for handling responses to promotion requests
+		case "demote":
+			Supernodes.Remove(params)
+			//TODO: add logic for handling demotions requests received
+		case "syncREQ":
+			///TODO: send userinfo back
+		default:
+			println("No logic added to handle this method. Please check!")
+		}
+	}
+
 }
