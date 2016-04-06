@@ -19,6 +19,8 @@ func main() {
 		SubscriptionMap: submap, RequestChanMap: channelMap}
 	go backend.Handle() //set up the handler for the messages received
 
+	backend.Bootstrap(s)
+
 	/*client := dnsimple.GetClient()
 	dnsimple.PrintDomains(client)
 	records := dnsimple.GetRecords(client)

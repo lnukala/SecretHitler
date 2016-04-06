@@ -1,6 +1,7 @@
 package backend
 
 import (
+	"apiserver"
 	"constants"
 	"dnsimple"
 	"strings"
@@ -139,5 +140,18 @@ func Handle() {
 		default:
 			println("No logic added to handle this method. Please check!")
 		}
+	}
+}
+
+// Bootstrap  bootstrap routine
+func Bootstrap(server *apiserver.APIServer) {
+	client := dnsimple.GetClient()
+	records := dnsimple.GetRecords(client)
+	if len(records) < constants.MaxSuperNumber {
+		Promote()
+		server.SetSuper(true)
+	} else {
+		// TODO: join system as subnode
+		server.SetSuper(false)
 	}
 }
