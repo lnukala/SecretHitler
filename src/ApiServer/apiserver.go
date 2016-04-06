@@ -37,7 +37,7 @@ func GetServer() *APIServer {
 	singleServer.m.Use(render.Renderer())
 
 	// heartbeet  returns StatusOK with a string
-	singleServer.m.Get("/heartbeet", func() string {
+	singleServer.m.Get("/heartbeat", func() string {
 		return "I'm alive"
 	})
 

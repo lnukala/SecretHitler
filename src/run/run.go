@@ -3,6 +3,7 @@ package main
 import (
 	api "apiserver"
 	"backend"
+	"raft"
 	"time"
 	"zmq"
 )
@@ -18,13 +19,30 @@ func main() {
 		SubscriptionMap: submap, RequestChanMap: channelMap}
 	go backend.Handle() //set up the handler for the messages received
 
-	backend.Subscribe("127.0.0.1", "topic")
+	/*client := dnsimple.GetClient()
+	dnsimple.PrintDomains(client)
+	records := dnsimple.GetRecords(client)
+	dnsimple.AddRecord(client)*/
+
+	raft := raft.New()
+	raft.InitRaft()
+	time.Sleep(5000 * time.Millisecond)
+	raft.Set("foo", "bar")
+	// Wait for committed log entry to be applied.
+	time.Sleep(500 * time.Millisecond)
+	value, err := raft.Get("foo")
+	if err != nil {
+		print(err.Error())
+	}
+	print(value)
+
+	/*backend.Subscribe("127.0.0.1", "topic")
 	time.Sleep(1000 * time.Millisecond)
 	backend.Publish("topic", "method", "params")
 	time.Sleep(1000 * time.Millisecond)
 	backend.UnsubscribeTopic("127.0.0.1", "topic")
 	time.Sleep(1000 * time.Millisecond)
-	backend.Publish("topic", "method", "params")
+	backend.Publish("topic", "method", "params")*/
 
-	time.Sleep(100000 * time.Millisecond)
+	select {}
 }
