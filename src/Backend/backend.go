@@ -4,6 +4,9 @@ import (
 	"apiserver"
 	"constants"
 	"dnsimple"
+	"fmt"
+	"net/http"
+	"strconv"
 	"strings"
 	"time"
 	"userinfo"
@@ -143,10 +146,26 @@ func Handle() {
 	}
 }
 
-// Bootstrap  bootstrap routine
-func Bootstrap(server *apiserver.APIServer) {
+func cleanRecords() {
 	client := dnsimple.GetClient()
 	records := dnsimple.GetRecords(client)
+	for _, r := range records {
+		url := "http://" + r.Content + ":3000/heartbeat"
+		fmt.Println(url)
+		_, err := http.Get(url)
+		if err != nil {
+			fmt.Println("Deleting " + r.Content)
+			r.Delete(client)
+		}
+	}
+}
+
+// Bootstrap  bootstrap routine
+func Bootstrap(server *apiserver.APIServer) {
+	cleanRecords()
+	client := dnsimple.GetClient()
+	records := dnsimple.GetRecords(client)
+	fmt.Println("Existing Supernodes: " + strconv.Itoa(len(records)))
 	if len(records) < constants.MaxSuperNumber {
 		Promote()
 		server.SetSuper(true)
