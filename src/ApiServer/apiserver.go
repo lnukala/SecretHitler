@@ -51,7 +51,9 @@ func (s *APIServer) AddUser(uid string) {
 	s.userList = append(s.userList, uid)
 }
 
-// NotifyGet  send message to Frontend
+// NotifyGet  use this method to send notification to front end. Paramemter in param map
+// @hook the url
+// @param parameters
 func NotifyGet(hook string, param map[string]string) {
 	front := "http://localhost:8000/"
 	url := front + hook + "?"

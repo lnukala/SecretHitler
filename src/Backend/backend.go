@@ -190,6 +190,7 @@ func Bootstrap(server *apiserver.APIServer) {
 			server.AddSuperNode(superrec.Content) // pass the super nodes info to APIServer
 		}
 		server.SetSuper(true) // I'm a supernode
+		server.AddSuperNode(zmq.GetPublicIP())
 		Publish("subnode", "adduser", zmq.GetPublicIP())
 		isSuper = true
 	} else {
