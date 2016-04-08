@@ -32,6 +32,8 @@ var Supernodes = mapset.NewSet()
 // MySuper  backend use supernode
 var MySuper = "localhost"
 
+var isSuper = false
+
 //Subscribe :method to subscribe to a particular topic on a particular ip
 func Subscribe(ip string, topic string) {
 	//check if already subscribed on this ip and topic
@@ -86,6 +88,7 @@ func Promote() {
 		Supernodes.Add(record.Content)
 		Request(record.Content, "promoteREQ"+constants.Delimiter+zmq.GetPublicIP()) // tell him I'm a supernode
 		Subscribe(record.Content, "supernode")                                      // subscribe to "supernode" topic
+		Subscribe(record.Content, "subnode")
 	}
 	if len(records) > 0 {
 		syncFrom(records[0].Content)
@@ -137,6 +140,7 @@ func Handle() {
 		case "promoteREQ": // params: the IP address
 			Supernodes.Add(params)
 			Subscribe(params, "supernode") // subscribe back
+			Subscribe(params, "subnode")
 			userinfo.AddUser(userinfo.User{UID: params, Addr: params, IsSuper: true})
 		case "promoteREP":
 			///TODO: Add logic for handling responses to promotion requests
@@ -145,6 +149,15 @@ func Handle() {
 			//TODO: add logic for handling demotions requests received
 		case "syncREQ":
 			///TODO: send userinfo back
+		case "adduser_req":
+			if isSuper {
+				Publish("subnode", "adduser", params)
+			}
+			api := apiserver.GetServer()
+			api.AddUser(params)
+		case "adduser":
+			api := apiserver.GetServer()
+			api.AddUser(params)
 		default:
 			println("No logic added to handle this method. Please check!")
 		}
@@ -177,11 +190,14 @@ func Bootstrap(server *apiserver.APIServer) {
 			server.AddSuperNode(superrec.Content) // pass the super nodes info to APIServer
 		}
 		server.SetSuper(true) // I'm a supernode
+		Publish("subnode", "adduser", zmq.GetPublicIP())
+		isSuper = true
 	} else {
 		rnn := rand.Int() % len(records)
 		MySuper = records[rnn].Content
-		Subscribe(MySuper, "subnode") // subscribe to "subnode" topic
-		server.AttachTo(MySuper)      // tell apiserver I attache to a Supernode
-		server.SetSuper(false)        // I'm a subnode
+		Request(MySuper, "adduser_req"+constants.Delimiter+zmq.GetPublicIP()) // add user to supernode
+		Subscribe(MySuper, "subnode")                                         // subscribe to "subnode" topic
+		server.AttachTo(MySuper)                                              // tell apiserver I attache to a Supernode
+		server.SetSuper(false)                                                // I'm a subnode
 	}
 }

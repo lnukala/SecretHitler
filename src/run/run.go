@@ -10,6 +10,8 @@ import (
 
 func main() {
 	s := api.GetServer()
+	s.SetUID(zmq.GetPublicIP())
+	s.AddUser(zmq.GetPublicIP())           // add itself
 	go s.RunServer()                       // run the server in new thread
 	go zmq.ServerSetupREP()                //set up server to respond to direct requests
 	publishchannel := zmq.ServerSetupPUB() //Set up channel for publishing state

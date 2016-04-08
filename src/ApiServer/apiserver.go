@@ -14,7 +14,9 @@ type APIServer struct {
 	state      int
 	super      bool
 	superList  []string
+	userList   []string
 	attachedTo string
+	uid        string
 }
 
 var singleServer *APIServer
@@ -29,6 +31,11 @@ func (s *APIServer) SetSuper(isSuper bool) {
 	s.super = isSuper
 }
 
+// SetUID  : set user id
+func (s *APIServer) SetUID(userid string) {
+	s.uid = userid
+}
+
 // AddSuperNode   add one super node to the list
 func (s *APIServer) AddSuperNode(superip string) {
 	s.superList = append(s.superList, superip)
@@ -39,9 +46,14 @@ func (s *APIServer) AttachTo(superip string) {
 	s.attachedTo = superip
 }
 
+// AddUser   add a user
+func (s *APIServer) AddUser(uid string) {
+	s.userList = append(s.userList, uid)
+}
+
 // NotifyGet  send message to Frontend
 func NotifyGet(hook string, param map[string]string) {
-	front := "http://localhost/"
+	front := "http://localhost:8000/"
 	url := front + hook + "?"
 	for k, v := range param {
 		url += k + "=" + v + "&"
@@ -65,7 +77,7 @@ func GetServer() *APIServer {
 
 	// login  return json data including the succes information
 	singleServer.m.Get("/login", func(args martini.Params, r render.Render) {
-		r.JSON(http.StatusOK, map[string]interface{}{"success": true})
+		r.JSON(http.StatusOK, map[string]interface{}{"uid": -1, "is_super": singleServer.super})
 	})
 
 	// rooms  list all the rooms
@@ -87,6 +99,11 @@ func GetServer() *APIServer {
 	// superlist  see the super node list
 	singleServer.m.Get("/superlist", func(args martini.Params, r render.Render) {
 		r.JSON(http.StatusOK, map[string]interface{}{"superlist": singleServer.superList})
+	})
+
+	// userlist  see the userlist
+	singleServer.m.Get("/userlist", func(args martini.Params, r render.Render) {
+		r.JSON(http.StatusOK, map[string]interface{}{"userlist": singleServer.userList})
 	})
 
 	return singleServer
