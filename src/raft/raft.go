@@ -159,6 +159,19 @@ func (s *Store) Join(addr string) error {
 	return nil
 }
 
+// Leave removes a node, located at addr, to this store. The state clean up has
+// to be done by the node itself
+func (s *Store) Leave(addr string) error {
+	s.logger.Printf("received removal request for remote node as %s", addr)
+
+	f := s.raft.RemovePeer(addr)
+	if f.Error() != nil {
+		return f.Error()
+	}
+	s.logger.Printf("node at %s removed succesfully", addr)
+	return nil
+}
+
 type fsm Store
 
 // Apply : applies a Raft log entry to the key-value store.
