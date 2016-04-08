@@ -5,6 +5,7 @@ import (
 	"constants"
 	"dnsimple"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,6 +28,9 @@ var State CommunicationState
 
 //Supernodes :et of the supernodes currently in the system
 var Supernodes = mapset.NewSet()
+
+// MySuper  backend use supernode
+var MySuper = "localhost"
 
 //Subscribe :method to subscribe to a particular topic on a particular ip
 func Subscribe(ip string, topic string) {
@@ -77,10 +81,11 @@ func Request(ip string, message string) (string, error) {
 func Promote() {
 	client := dnsimple.GetClient()
 	records := dnsimple.GetRecords(client)
-	//If there are other supernodes in the system, get the state from them
+
 	for _, record := range records {
 		Supernodes.Add(record.Content)
-		Request(record.Content, "promoteREQ"+constants.Delimiter+zmq.GetPublicIP())
+		Request(record.Content, "promoteREQ"+constants.Delimiter+zmq.GetPublicIP()) // tell him I'm a supernode
+		Subscribe(record.Content, "supernode")                                      // subscribe to "supernode" topic
 	}
 	if len(records) > 0 {
 		syncFrom(records[0].Content)
@@ -131,7 +136,7 @@ func Handle() {
 		switch method {
 		case "promoteREQ": // params: the IP address
 			Supernodes.Add(params)
-			Subscribe(params, "supernode")
+			Subscribe(params, "supernode") // subscribe back
 			userinfo.AddUser(userinfo.User{UID: params, Addr: params, IsSuper: true})
 		case "promoteREP":
 			///TODO: Add logic for handling responses to promotion requests
@@ -167,10 +172,16 @@ func Bootstrap(server *apiserver.APIServer) {
 	records := dnsimple.GetRecords(client)
 	fmt.Println("Existing Supernodes: " + strconv.Itoa(len(records)))
 	if len(records) < constants.MaxSuperNumber {
-		Promote()
-		server.SetSuper(true)
+		Promote() // tell other supernodesI'm a supernode and subscribe
+		for _, superrec := range records {
+			server.AddSuperNode(superrec.Content) // pass the super nodes info to APIServer
+		}
+		server.SetSuper(true) // I'm a supernode
 	} else {
-		// TODO: join system as subnode
-		server.SetSuper(false)
+		rnn := rand.Int() % len(records)
+		MySuper = records[rnn].Content
+		Subscribe(MySuper, "subnode") // subscribe to "subnode" topic
+		server.AttachTo(MySuper)      // tell apiserver I attache to a Supernode
+		server.SetSuper(false)        // I'm a subnode
 	}
 }
