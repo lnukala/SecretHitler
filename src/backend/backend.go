@@ -150,7 +150,7 @@ func Handle() {
 			Subscribe(params, "supernode") // subscribe back
 			Subscribe(params, "subnode")
 			userinfo.AddUser(userinfo.User{UID: params, Addr: params, IsSuper: true})
-			raft.RaftInstance.Join(params) //add ip to RaftInstance
+			raft.RaftStore.Join(params) //add ip to RaftInstance
 		case "promoteREP":
 			///TODO: Add logic for handling responses to promotion requests
 		case "demote":
