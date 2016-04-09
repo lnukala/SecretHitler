@@ -31,6 +31,9 @@ type Store struct {
 	logger *log.Logger
 }
 
+//RaftInstance : of raft being used
+var RaftInstance *Store
+
 type command struct {
 	Op    string `json:"op,omitempty"`
 	Key   string `json:"key,omitempty"`
@@ -56,10 +59,10 @@ type Room struct {
 }
 
 type User struct {
-	UserId   int
-	Name     string
-	UserType string
-	NodeType string
+	UserId     int
+	Name       string
+	UserType   string
+	NodeType   string
 	SecretRole string
 }
 
@@ -312,7 +315,7 @@ func (s *Store) GetRoom(roomId int) string {
 /**
 * Pass in a JSON object, change to struct, then store it!
 * Returns true if successful
-*/
+ */
 func (s *Store) StoreUser(passedObj map[string]interface{}) {
 
 	var uid int
@@ -322,7 +325,7 @@ func (s *Store) StoreUser(passedObj map[string]interface{}) {
 	var secretRole string
 	var room Room
 
-        uid = passedObj["user_id"].(int)
+	uid = passedObj["user_id"].(int)
 	name = passedObj["name"].(string)
 	userType = passedObj["user_type"].(string)
 	nodeType = passedObj["node_type"].(string)
@@ -330,13 +333,13 @@ func (s *Store) StoreUser(passedObj map[string]interface{}) {
 
 	user := User{uid, name, userType, nodeType, secretRole}
 
-        jsonObj, _ := json.Marshal(user)
+	jsonObj, _ := json.Marshal(user)
 	stringId := strconv.Itoa(uid)
 	stringObj := string(jsonObj)
-        s.Set(stringId, stringObj)
+	s.Set(stringId, stringObj)
 
 	//----Also need to update the room list!
-	//----TODO this is a hack, we need to pass the room code 
+	//----TODO this is a hack, we need to pass the room code
 	stringObj, _ = s.Get("0")
 	byteObj := []byte(stringObj)
 	json.Unmarshal(byteObj, &room)

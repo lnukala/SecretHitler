@@ -3,7 +3,7 @@ package main
 import (
 	api "apiserver"
 	"backend"
-	"constants"
+	"raft"
 	"time"
 	"zmq"
 )
@@ -23,8 +23,9 @@ func main() {
 	isSuper := backend.Bootstrap(s)
 
 	if isSuper { //----We only set up sn stuff if we're a sn
-		//	raft := raft.New()
-		//	raft.InitRaft()
+		myraft := raft.New()
+		raft.RaftInstance = myraft
+		myraft.InitRaft()
 	}
 
 	time.Sleep(1000 * time.Millisecond)
@@ -36,7 +37,6 @@ func main() {
 	backend.UnsubscribeTopic("127.0.0.1", "topic")
 	time.Sleep(1000 * time.Millisecond)
 	backend.Publish("topic", "method", "params")
-	backend.Request("127.0.0.1", "newPlayerz"+constants.Delimiter+zmq.GetPublicIP())
 
 	select {}
 }

@@ -146,9 +146,11 @@ func Handle() {
 		switch method {
 		case "promoteREQ": // params: the IP address
 			Supernodes.Add(params)
+			println("promote request received for " + params)
 			Subscribe(params, "supernode") // subscribe back
 			Subscribe(params, "subnode")
 			userinfo.AddUser(userinfo.User{UID: params, Addr: params, IsSuper: true})
+			raft.RaftInstance.Join(params) //add ip to RaftInstance
 		case "promoteREP":
 			///TODO: Add logic for handling responses to promotion requests
 		case "demote":

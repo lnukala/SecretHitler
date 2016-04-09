@@ -238,6 +238,5 @@ func (f *Request) Geterror() error {
 func Handle(method string, params string) string {
 	ReceiveChannel <- ZMessage{tag: method, content: params}
 	response := <-ResponseChannel
-	println("returning" + response)
 	return response
 }
