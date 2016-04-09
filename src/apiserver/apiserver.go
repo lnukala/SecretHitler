@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	raft "raft"
 
 	"github.com/GiterLab/urllib"
 	"github.com/go-martini/martini"
@@ -23,6 +24,9 @@ type APIServer struct {
 }
 
 var singleServer *APIServer
+
+//RaftStore : Global variable for store
+var RaftStore raft.Store
 
 // RunServer : start the server
 func (s *APIServer) RunServer() {
@@ -101,17 +105,24 @@ func GetServer() *APIServer {
 		//Creating the user json
 		var userjson = map[string]interface{}{"user_id": singleServer.uid, "name": username, "user_type": "liberal", "node_type": nodeType, "secret_role": "hitler"}
 
+		//Call the DNS to send the requet to a super node
+		registerationrequest := urllib.Post("http://lnukala.me:3000/registeruser/")
+		registerationrequest, err := registerationrequest.JsonBody(userjson)
+		if err != nil {
+		}
+		registerationrequest.String()
+
 		//Getting the room json and calling the update
 		print("Calling the room info update method!!")
-		request := urllib.Post("http://127.0.0.1:8000/add_base_room/")
+		roomrequest := urllib.Post("http://127.0.0.1:8000/add_base_room/")
 		var roomjson = map[string]interface{}{"room_id": 1, "curr_players": "127.0.0.1,127.0.0.2", "global_comm_topic_name": "coms", "global_notification_topic_name": "notifications",
 			"no_of_policies_passed": 0, "fascist_policies_passed": 0, "liberal_policies_passed": 0, "current_fascist_in_deck": 11, "current_liberal_in_deck": 6, "current_total_in_deck": 17,
 			"chancellor_id": -1, "president_id": -1, "president_channel": "pres", "chancellor_channel": "chan", "hitler_id": -1}
 
-		request, err := request.JsonBody(roomjson)
-		if err != nil {
+		roomrequest, err2 := roomrequest.JsonBody(roomjson)
+		if err2 != nil {
 		}
-		request.String()
+		roomrequest.String()
 
 		r.JSON(http.StatusOK, userjson)
 	})
@@ -131,6 +142,20 @@ func GetServer() *APIServer {
 		//Get the user details from gavins method and return to front end
 		var userjson = map[string]interface{}{"user_id": userid, "name": "test_user", "user_type": "liberal", "node_type": "test_role", "secret_role": "hitler"}
 		r.JSON(http.StatusOK, userjson)
+	})
+
+	// rooms  list all the rooms
+	singleServer.m.Post("/registeruser", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		var userjson string
+		for key, value := range v {
+			print(key)
+			userjson = userjson + "," + value[0]
+		}
+		print("Registertion String - " + userjson)
+		raft.RaftStore.StoreUser(userjson)
+		r.JSON(http.StatusOK, "")
 	})
 
 	// rooms  list all the rooms

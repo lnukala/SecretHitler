@@ -56,12 +56,15 @@ type Room struct {
 }
 
 type User struct {
-	UserId   int
-	Name     string
-	UserType string
-	NodeType string
+	UserId     int
+	Name       string
+	UserType   string
+	NodeType   string
 	SecretRole string
 }
+
+//RaftStore : Global variable exposed
+var RaftStore Store
 
 //New : returns a new Store.
 func New() *Store {
@@ -312,7 +315,7 @@ func (s *Store) GetRoom(roomId int) string {
 /**
 * Pass in a JSON object, change to struct, then store it!
 * Returns true if successful
-*/
+ */
 func (s *Store) StoreUser(passedObj map[string]interface{}) {
 
 	var uid int
@@ -321,7 +324,7 @@ func (s *Store) StoreUser(passedObj map[string]interface{}) {
 	var nodeType string
 	var secretRole string
 
-        uid = passedObj["user_id"].(int)
+	uid = passedObj["user_id"].(int)
 	name = passedObj["name"].(string)
 	userType = passedObj["user_type"].(string)
 	nodeType = passedObj["node_type"].(string)
@@ -329,10 +332,10 @@ func (s *Store) StoreUser(passedObj map[string]interface{}) {
 
 	user := User{uid, name, userType, nodeType, secretRole}
 
-        jsonObj, _ := json.Marshal(user)
+	jsonObj, _ := json.Marshal(user)
 	stringId := strconv.Itoa(uid)
 	stringObj := string(jsonObj)
-        s.Set(stringId, stringObj)
+	s.Set(stringId, stringObj)
 
 }
 

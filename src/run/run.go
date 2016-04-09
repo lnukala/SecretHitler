@@ -3,10 +3,13 @@ package main
 import (
 	api "apiserver"
 	"backend"
-	"raft"
+	raft "raft"
 	"time"
 	"zmq"
 )
+
+// RaftStore : Global variable
+
 
 func main() {
 	s := api.GetServer()
@@ -23,9 +26,10 @@ func main() {
 	isSuper := backend.Bootstrap(s)
 
 	//----TODO Integrate GetRoom as necessry
-	if(isSuper) { //----We only set up sn stuff if we're a sn
-		raft := raft.New()
-		raft.InitRaft()
+	if isSuper { //----We only set up sn stuff if we're a sn
+		raft.RaftStore := raft.New()
+		raft.RaftStore.InitRaft()
+		//api.RaftStore = RaftStore
 		//room := raft.GetRoom(0) //TODO This is the magical room id, should probably get changed at some point
 	}
 
