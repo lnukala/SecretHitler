@@ -20,19 +20,16 @@ func main() {
 	backend.State = backend.CommunicationState{PublishChannel: publishchannel,
 		SubscriptionMap: submap, RequestChanMap: channelMap}
 	go backend.Handle() //set up the handler for the messages received
-	backend.Bootstrap(s)
+	isSuper := backend.Bootstrap(s)
 
-	raft := raft.New()
-	raft.InitRaft()
-	time.Sleep(5000 * time.Millisecond)
-	raft.Set("foo", "bar")
-	// Wait for committed log entry to be applied.
-	time.Sleep(500 * time.Millisecond)
-	value, err := raft.Get("foo")
-	if err != nil {
-		print(err.Error())
+	//----TODO Integrate GetRoom as necessry
+	if(isSuper) { //----We only set up sn stuff if we're a sn
+		raft := raft.New()
+		raft.InitRaft()
+		//room := raft.GetRoom(0) //TODO This is the magical room id, should probably get changed at some point
 	}
-	print(value)
+
+	time.Sleep(1000 * time.Millisecond)
 
 	/*backend.Subscribe("127.0.0.1", "topic")
 	time.Sleep(1000 * time.Millisecond)
