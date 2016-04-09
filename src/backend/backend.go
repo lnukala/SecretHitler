@@ -222,6 +222,12 @@ func Bootstrap(server *apiserver.APIServer) bool {
 	client := dnsimple.GetClient()
 	records := dnsimple.GetRecords(client)
 	fmt.Println("Existing Supernodes: " + strconv.Itoa(len(records)))
+	//delete your own entry from dns in case it exists
+	for _, superrec := range records {
+		if superrec.Content == zmq.GetPublicIP() {
+			dnsimple.DeleteRecord(client, zmq.GetPublicIP())
+		}
+	}
 	if len(records) < constants.MaxSuperNumber {
 		Promote() // tell other supernodesI'm a supernode and subscribe
 		for _, superrec := range records {
