@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/GiterLab/urllib"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
 )
@@ -80,7 +81,7 @@ func GetServer() *APIServer {
 	})
 
 	// login  return json data including the succes information
-	singleServer.m.Get("/login", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/login", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		var username string
@@ -96,8 +97,39 @@ func GetServer() *APIServer {
 		} else {
 			nodeType = "subnode"
 		}
-		var json = map[string]interface{}{"user_id": singleServer.uid, "name": username, "user_type": "liberal", "node_type": nodeType, "secret_role": "hitler"}
-		r.JSON(http.StatusOK, json)
+
+		//Creating the user json
+		var userjson = map[string]interface{}{"user_id": singleServer.uid, "name": username, "user_type": "liberal", "node_type": nodeType, "secret_role": "hitler"}
+
+		//Getting the room json and calling the update
+		print("Calling the room info update method!!")
+		request := urllib.Post("http://127.0.0.1:8000/add_base_room/")
+		var roomjson = map[string]interface{}{"room_id": 1, "curr_players": "1,2", "global_comm_topic_name": "coms", "global_notification_topic_name": "notifications",
+			"no_of_policies_passed": 0, "fascist_policies_passed": 0, "liberal_policies_passed": 0, "current_fascist_in_deck": 11, "current_liberal_in_deck": 6, "current_total_in_deck": 17,
+			"chancellor_id": -1, "president_id": -1, "president_channel": "pres", "chancellor_channel": "chan", "hitler_id": -1}
+
+		request, err := request.JsonBody(roomjson)
+		if err != nil {
+		}
+		request.String()
+		r.JSON(http.StatusOK, userjson)
+	})
+
+	// rooms  list all the rooms
+	singleServer.m.Post("/getuser", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		var userid string
+		for key, value := range v {
+			if key == "userid" {
+				userid = value[0]
+			}
+		}
+		print("User id queries - " + userid)
+		//Get the user details from gavins method and return to front end
+		var userjson = map[string]interface{}{"user_id": "127.0.0.1", "name": "test_user", "user_type": "liberal", "node_type": "test_role", "secret_role": "hitler"}
+
+		r.JSON(http.StatusOK, userjson)
 	})
 
 	// rooms  list all the rooms
