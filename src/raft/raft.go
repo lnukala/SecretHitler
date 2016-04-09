@@ -296,20 +296,24 @@ func (f *fsmSnapshot) Release() {}
 /**
 * Get our room object if able, or create it if it doesn't exist
  */
-func (s *Store) GetRoom(roomId int) []byte {
+func (s *Store) GetRoom(roomId int) Room {
+
+	var roomResponse Room
 
 	roomString := strconv.Itoa(roomId)
 	response, err := s.Get(roomString)
+
 
 	if err != nil {
 		room := Room{roomId, "", "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
 		jsonObj, _ := json.Marshal(room)
 		stringObj := string(jsonObj)
 		s.Set(roomString, stringObj)
-		return jsonObj
+		return room
 	}
 	byteResponse := []byte(response)
-	return byteResponse
+	json.Unmarshal(byteResponse, &roomResponse)
+	return roomResponse
 
 }
 
@@ -319,6 +323,7 @@ func (s *Store) GetRoom(roomId int) []byte {
 */
 func (s *Store) StoreUser(passedObj string) {
 	var room Room
+
 	tokenArray := strings.Split(passedObj, ",")
 	user := User{tokenArray[0], tokenArray[1], tokenArray[2], tokenArray[3], tokenArray[4]}
 	jsonObj, _ := json.Marshal(user)
@@ -327,8 +332,7 @@ func (s *Store) StoreUser(passedObj string) {
 
 	//----Also need to update the room list!
 	//----TODO this is a hack, we need to pass the room code
-	jsonObj = s.GetRoom(0)
-	json.Unmarshal(jsonObj, &room)
+	room = s.GetRoom(0)
 	if (strings.Compare(room.CurrPlayers, "") == 0) {
 		room.CurrPlayers = zmq.GetPublicIP()
 	} else {
