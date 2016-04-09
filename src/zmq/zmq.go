@@ -87,6 +87,9 @@ var SubscriptionState = map[subscriptionData]bool{}
 //ReceiveChannel  :all receivd message goes into this channel
 var ReceiveChannel = make(chan ZMessage)
 
+//ReceiveChannel  :all receivd message goes into this channel
+var ResponseChannel = make(chan string)
+
 /*ServerSetupREP :Setting up the zmq server to receive requests
   and handle them*/
 func ServerSetupREP() {
@@ -102,10 +105,10 @@ func ServerSetupREP() {
 		sourceIP = strings.Replace(sourceIP, "\n", "", 1)
 		print("[ZMQ] Message received at server from " + sourceIP)
 		println(", message: ", msg[1])
-		socket.Send("ACK", 0)
 		//Handle the request received
 		input := strings.SplitN(msg[1], constants.Delimiter, 2)
-		Handle(input[0], input[1])
+		response := Handle(input[0], input[1])
+		socket.Send(response, 0)
 	}
 }
 
@@ -232,6 +235,8 @@ func (f *Request) Geterror() error {
 }
 
 //Handle :Handle messages received
-func Handle(method string, params string) {
+func Handle(method string, params string) string {
 	ReceiveChannel <- ZMessage{tag: method, content: params}
+	response := <-ResponseChannel
+	return response
 }
