@@ -311,7 +311,7 @@ func (s *Store) GetRoom(roomId int) Room {
 		s.Set(roomString, stringObj)
 		return room
 	}
-	gyteResponse := []byte(response)
+	byteResponse := []byte(response)
 	json.Unmarshal(byteResponse, &roomResponse)
 	return roomResponse
 
@@ -334,7 +334,7 @@ func (s *Store) StoreUser(passedObj string) {
 	//----TODO this is a hack, we need to pass the room code
 	room = s.GetRoom(0)
 	if (strings.Compare(room.CurrPlayers, "") == 0) {
-		room.CurrPlayers = tokenArray[0]
+		room.CurrPlayers = zmq.GetPublicIP()
 	} else {
 		room.CurrPlayers += "," + tokenArray[0]
 	}
