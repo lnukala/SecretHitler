@@ -28,6 +28,9 @@ var singleServer *APIServer
 //RaftStore : Global variable for store
 var RaftStore raft.Store
 
+//NewPlayerChannel :new player info is passed here
+var NewPlayerChannel = make(chan raft.Room)
+
 // RunServer : start the server
 func (s *APIServer) RunServer() {
 	s.m.Run()
@@ -117,6 +120,14 @@ func GetServer() *APIServer {
 		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
 		roomrequest.String()
 
+<<<<<<< Updated upstream
+=======
+		//calling the method to tell others you have joined
+		room := raft.Room{}
+		data, _ := roomrequest.Bytes()
+		json.Unmarshal(data, &room)
+		NewPlayerChannel <- room
+>>>>>>> Stashed changes
 		//Getting the room json and calling the update
 		r.JSON(http.StatusOK, userjson)
 	})

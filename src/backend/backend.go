@@ -39,6 +39,7 @@ var Supernodes = mapset.NewSet()
 // MySuper  backend use supernode
 var MySuper = "localhost"
 
+//default state is subnode
 var isSuper = false
 
 //Subscribe :method to subscribe to a particular topic on a particular ip
@@ -249,12 +250,14 @@ func Bootstrap(server *apiserver.APIServer) bool {
 	return isSuper
 }
 
-//NewPlayer  : HANDLE NEW players
-func NewPlayer(roominfo raft.Room) {
-	RoomState = roominfo
-	players := strings.Split(roominfo.CurrPlayers, ",")
-	for i := 0; i < len(players); i++ {
-		Subscribe(players[i], roominfo.GlobalComTopicName)
-		Request(players[i], "newPlayer"+constants.Delimiter+zmq.GetPublicIP())
+//HandleNewPlayer  : HANDLE NEW players
+func HandleNewPlayer() {
+	for {
+		RoomState = <-apiserver.NewPlayerChannel
+		players := strings.Split(RoomState.CurrPlayers, ",")
+		for i := 0; i < len(players); i++ {
+			Subscribe(players[i], RoomState.GlobalComTopicName)
+			Request(players[i], "newPlayer"+constants.Delimiter+zmq.GetPublicIP())
+		}
 	}
 }
