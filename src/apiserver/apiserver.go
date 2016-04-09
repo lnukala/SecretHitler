@@ -149,12 +149,27 @@ func GetServer() *APIServer {
 
 	// Register User
 	singleServer.m.Post("/getroom", func(req *http.Request, r render.Render) {
-		print("Getting the room details")
-		roomArray := raft.RaftStore.ge.GetRoom(0)
-		var roomjson map[string]interface{}
-		if err := json.Unmarshal(roomArray, &roomjson); err != nil {
-			panic(err)
-		}
+		print("Getting the room details!!!!!!!!!!")
+		RoomState := raft.RaftStore.GetRoom(0)
+		// var roomjson = map[string]interface{}{"room_id": 1, "curr_players": "127.0.0.1,127.0.0.2", "global_comm_topic_name": "coms", "global_notification_topic_name": "notifications",
+		// 	"no_of_policies_passed": 0, "fascist_policies_passed": 0, "liberal_policies_passed": 0, "current_fascist_in_deck": 11, "current_liberal_in_deck": 6, "current_total_in_deck": 17,
+		// 	"chancellor_id": -1, "president_id": -1, "president_channel": "pres", "chancellor_channel": "chan", "hitler_id": -1}
+
+		var roomjson = map[string]interface{}{"room_id": RoomState.RoomId,
+			"curr_players":                   RoomState.CurrPlayers,
+			"global_comm_topic_name":         RoomState.GlobalComTopicName,
+			"global_notification_topic_name": RoomState.GlobalNotificationTopicName,
+			"no_of_policies_passed":          RoomState.NoPoliciesPassed,
+			"fascist_policies_passed":        RoomState.FascistPolciesPassed,
+			"liberal_policies_passed":        RoomState.LiberalPoliciesPassed,
+			"current_fascist_in_deck":        RoomState.CurrentFascistInDeck,
+			"current_liberal_in_deck":        RoomState.CurrentLiberalInDeck,
+			"current_total_in_deck":          RoomState.CurrentTotalInDeck,
+			"chancellor_id":                  RoomState.ChancellorId,
+			"president_id":                   RoomState.PresidentId,
+			"president_channel":              RoomState.PresidentChannel,
+			"chancellor_channel":             RoomState.ChancelorChannel,
+			"hitler_id":                      RoomState.HitlerId}
 
 		//Getting the room json and calling the update
 		print("Calling the room info update method!!")
