@@ -26,7 +26,7 @@ const (
 // Store is a simple key-value store, where all changes are made via Raft consensus.
 type Store struct {
 	mu     sync.Mutex
-	m      map[string][]byte // The key-value store for the system.
+	m      map[string]string // The key-value store for the system.
 	raft   *raft.Raft        // The consensus mechanism
 	logger *log.Logger
 }
@@ -34,7 +34,7 @@ type Store struct {
 type command struct {
 	Op    string `json:"op,omitempty"`
 	Key   string `json:"key,omitempty"`
-	Value []byte
+	Value string `json:"value,omitempty"`
 }
 
 type Room struct {
@@ -66,7 +66,7 @@ type User struct {
 //New : returns a new Store.
 func New() *Store {
 	return &Store{
-		m:      make(map[string][]byte),
+		m:      make(map[string]string),
 		logger: log.New(os.Stderr, "[store] ", log.LstdFlags),
 	}
 }
@@ -126,14 +126,14 @@ func (s *Store) InitRaft() error {
 }
 
 // Get returns the value for the given key.
-func (s *Store) Get(key string) ([]byte, error) {
+func (s *Store) Get(key string) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.m[key], nil
 }
 
 // Set sets the value for the given key.
-func (s *Store) Set(key string, value []byte) error {
+func (s *Store) Set(key string, value string) error {
 	if s.raft.State() != raft.Leader {
 		return fmt.Errorf("not leader")
 	}
@@ -224,7 +224,7 @@ func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 	defer f.mu.Unlock()
 
 	// Clone the map.
-	o := make(map[string][]byte)
+	o := make(map[string]string)
 	for k, v := range f.m {
 		o[k] = v
 	}
@@ -234,7 +234,7 @@ func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 
 // Restore stores the key-value store to a previous state.
 func (f *fsm) Restore(rc io.ReadCloser) error {
-	o := make(map[string][]byte)
+	o := make(map[string]string)
 	if err := json.NewDecoder(rc).Decode(&o); err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (f *fsm) Restore(rc io.ReadCloser) error {
 	return nil
 }
 
-func (f *fsm) applySet(key string, value []byte) interface{} {
+func (f *fsm) applySet(key string, value string) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.m[key] = value
@@ -260,7 +260,7 @@ func (f *fsm) applyDelete(key string) interface{} {
 }
 
 type fsmSnapshot struct {
-	store map[string][]byte
+	store map[string]string
 }
 
 func (f *fsmSnapshot) Persist(sink raft.SnapshotSink) error {
@@ -292,16 +292,17 @@ func (f *fsmSnapshot) Release() {}
 /**
 * Get our room object if able, or create it if it doesn't exist
  */
-func (s *Store) GetRoom(roomId int) []byte {
+func (s *Store) GetRoom(roomId int) string {
 
 	roomString := strconv.Itoa(roomId)
-	response, _ := s.Get(roomString)
+	response, err := s.Get(roomString)
 
-	if response == nil {
+	if err != nil {
 		room := Room{roomId, zmq.GetPublicIP(), "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
 		jsonObj, _ := json.Marshal(room)
-		s.Set(roomString, jsonObj)
-		return jsonObj
+		stringObj := string(jsonObj)
+		s.Set(roomString, stringObj)
+		return stringObj
 	}
 
 	return response
@@ -330,13 +331,17 @@ func (s *Store) StoreUser(passedObj map[string]interface{}) {
 
         jsonObj, _ := json.Marshal(user)
 	stringId := strconv.Itoa(uid)
-        s.Set(stringId, jsonObj)
+	stringObj := string(jsonObj)
+        s.Set(stringId, stringObj)
 
 }
 
 // GetUser Get user from raft store
 func (s *Store) GetUser(userId int) []byte {
+
+	var byteResponse []byte
 	intId := strconv.Itoa(userId)
 	response, _ := s.Get(intId)
-	return response
+	byteResponse = []byte(response)
+	return byteResponse
 }
