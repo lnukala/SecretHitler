@@ -179,7 +179,7 @@ func cleanRecords() {
 }
 
 // Bootstrap  bootstrap routine
-func Bootstrap(server *apiserver.APIServer) {
+func Bootstrap(server *apiserver.APIServer) bool{
 	cleanRecords()
 	client := dnsimple.GetClient()
 	records := dnsimple.GetRecords(client)
@@ -201,4 +201,5 @@ func Bootstrap(server *apiserver.APIServer) {
 		server.AttachTo(MySuper)                                              // tell apiserver I attache to a Supernode
 		server.SetSuper(false)                                                // I'm a subnode
 	}
+	return isSuper;
 }

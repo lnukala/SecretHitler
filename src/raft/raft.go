@@ -9,8 +9,10 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
+	"zmq"
 
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/raft-boltdb"
@@ -24,7 +26,7 @@ const (
 // Store is a simple key-value store, where all changes are made via Raft consensus.
 type Store struct {
 	mu     sync.Mutex
-	m      map[string]string // The key-value store for the system.
+	m      map[string][]byte // The key-value store for the system.
 	raft   *raft.Raft        // The consensus mechanism
 	logger *log.Logger
 }
@@ -32,13 +34,31 @@ type Store struct {
 type command struct {
 	Op    string `json:"op,omitempty"`
 	Key   string `json:"key,omitempty"`
-	Value string `json:"value,omitempty"`
+	Value []byte
+}
+
+type Room struct {
+        RoomId int
+        CurrPlayers []string
+        GlobalComTopicName string
+        GlobalNotificationTopicName string
+        NoPoliciesPassed int
+        FascistPolciesPassed int
+        LiberalPoliciesPassed int
+        CurrentFascistInDeck int
+        CurrentLiberalInDeck int
+        CurrentTotalInDeck int
+        ChancellorId int
+        PresidentId int
+        PresidentChannel string
+        ChancelorChannel string
+        HitlerId int
 }
 
 //New : returns a new Store.
 func New() *Store {
 	return &Store{
-		m:      make(map[string]string),
+		m:      make(map[string][]byte),
 		logger: log.New(os.Stderr, "[store] ", log.LstdFlags),
 	}
 }
@@ -98,14 +118,14 @@ func (s *Store) InitRaft() error {
 }
 
 // Get returns the value for the given key.
-func (s *Store) Get(key string) (string, error) {
+func (s *Store) Get(key string) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.m[key], nil
 }
 
 // Set sets the value for the given key.
-func (s *Store) Set(key, value string) error {
+func (s *Store) Set(key string, value []byte) error {
 	if s.raft.State() != raft.Leader {
 		return fmt.Errorf("not leader")
 	}
@@ -196,7 +216,7 @@ func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 	defer f.mu.Unlock()
 
 	// Clone the map.
-	o := make(map[string]string)
+	o := make(map[string][]byte)
 	for k, v := range f.m {
 		o[k] = v
 	}
@@ -206,7 +226,7 @@ func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 
 // Restore stores the key-value store to a previous state.
 func (f *fsm) Restore(rc io.ReadCloser) error {
-	o := make(map[string]string)
+	o := make(map[string][]byte)
 	if err := json.NewDecoder(rc).Decode(&o); err != nil {
 		return err
 	}
@@ -217,7 +237,7 @@ func (f *fsm) Restore(rc io.ReadCloser) error {
 	return nil
 }
 
-func (f *fsm) applySet(key, value string) interface{} {
+func (f *fsm) applySet(key string, value []byte) interface{} {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.m[key] = value
@@ -232,7 +252,7 @@ func (f *fsm) applyDelete(key string) interface{} {
 }
 
 type fsmSnapshot struct {
-	store map[string]string
+	store map[string][]byte
 }
 
 func (f *fsmSnapshot) Persist(sink raft.SnapshotSink) error {
@@ -260,3 +280,24 @@ func (f *fsmSnapshot) Persist(sink raft.SnapshotSink) error {
 }
 
 func (f *fsmSnapshot) Release() {}
+
+/**
+* Get our room object if able, or create it if it doesn't exist
+*/
+func (s *Store) GetRoom(roomId int) []byte {
+
+	roomString := strconv.Itoa(roomId)
+	response, _ := s.Get(roomString)
+
+	if(response == nil) {
+		//----TODO Slice is currently set for 4, may need to be changed later. Keep this in mind.
+		room := Room{roomId, make([]string, 4), "coms", "notifications",  0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
+		room.CurrPlayers[0] = zmq.GetPublicIP()
+		jsonObj, _ := json.Marshal(room)
+		s.Set(roomString, jsonObj)
+		return jsonObj
+	}
+
+	return response
+
+}
