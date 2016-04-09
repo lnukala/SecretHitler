@@ -119,13 +119,6 @@ func GetServer() *APIServer {
 		print("Calling the get room method!!")
 		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
 		roomrequest.String()
-
-		//calling the method to tell others you have joined
-		room := raft.Room{}
-		data, _ := roomrequest.Bytes()
-		json.Unmarshal(data, &room)
-		NewPlayerChannel <- room
-
 		//Getting the room json and calling the update
 		r.JSON(http.StatusOK, userjson)
 	})
@@ -192,6 +185,9 @@ func GetServer() *APIServer {
 		if err2 != nil {
 		}
 		roomrequest.String()
+
+		//calling the method to tell others you have joined
+		NewPlayerChannel <- RoomState
 
 		//calling the method to tell others you have joined
 		//backend.NewPlayer(RoomState)
