@@ -336,7 +336,9 @@ func (s *Store) StoreUser(passedObj string) {
 	if (strings.Compare(room.CurrPlayers, "") == 0) {
 		room.CurrPlayers = zmq.GetPublicIP()
 	} else {
-		room.CurrPlayers += "," + tokenArray[0]
+		if(!strings.Contains(room.CurrPlayers, tokenArray[0])) {
+	               room.CurrPlayers += "," + tokenArray[0]
+		}
 	}
 	jsonObj, _ = json.Marshal(room)
 	stringObj = string(jsonObj)
