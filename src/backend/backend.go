@@ -75,11 +75,12 @@ func Request(ip string, message string) (string, error) {
 	response := zmq.SendREQ(message, State.RequestChanMap[ip])
 	if response.Geterror() != nil {
 		println("[Backend request]" + response.Geterror().Error())
-	}
-	if strings.Contains(message, constants.Delimiter) == false {
+	} else if response.Getmessage() == success {
+		println("received success response!")
+	} else if strings.Contains(response.Getmessage(), constants.Delimiter) == false {
 		println("delimiter not present in message received in promote")
 	} else {
-		input := strings.SplitN(message, constants.Delimiter, 2)
+		input := strings.SplitN(response.Getmessage(), constants.Delimiter, 2)
 		zmq.Handle(input[0], input[1])
 	}
 	return response.Getmessage(), response.Geterror()
@@ -194,6 +195,7 @@ func Handle() {
 			zmq.ResponseChannel <- success
 		default:
 			println("No logic added to handle this method. Please check!")
+			zmq.ResponseChannel <- success
 		}
 	}
 }

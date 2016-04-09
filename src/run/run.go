@@ -3,7 +3,7 @@ package main
 import (
 	api "apiserver"
 	"backend"
-	"raft"
+	"constants"
 	"time"
 	"zmq"
 )
@@ -22,22 +22,21 @@ func main() {
 	go backend.Handle() //set up the handler for the messages received
 	isSuper := backend.Bootstrap(s)
 
-	//----TODO Integrate GetRoom as necessry
-	if(isSuper) { //----We only set up sn stuff if we're a sn
-		raft := raft.New()
-		raft.InitRaft()
-		//room := raft.GetRoom(0) //TODO This is the magical room id, should probably get changed at some point
+	if isSuper { //----We only set up sn stuff if we're a sn
+		//	raft := raft.New()
+		//	raft.InitRaft()
 	}
 
 	time.Sleep(1000 * time.Millisecond)
 
-	/*backend.Subscribe("127.0.0.1", "topic")
+	backend.Subscribe("127.0.0.1", "topic")
 	time.Sleep(1000 * time.Millisecond)
 	backend.Publish("topic", "method", "params")
 	time.Sleep(1000 * time.Millisecond)
 	backend.UnsubscribeTopic("127.0.0.1", "topic")
 	time.Sleep(1000 * time.Millisecond)
-	backend.Publish("topic", "method", "params")*/
+	backend.Publish("topic", "method", "params")
+	backend.Request("127.0.0.1", "newPlayerz"+constants.Delimiter+zmq.GetPublicIP())
 
 	select {}
 }

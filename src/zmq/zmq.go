@@ -87,7 +87,7 @@ var SubscriptionState = map[subscriptionData]bool{}
 //ReceiveChannel  :all receivd message goes into this channel
 var ReceiveChannel = make(chan ZMessage)
 
-//ReceiveChannel  :all receivd message goes into this channel
+//ResponseChannel  :all receivd message goes into this channel
 var ResponseChannel = make(chan string)
 
 /*ServerSetupREP :Setting up the zmq server to receive requests
@@ -238,5 +238,6 @@ func (f *Request) Geterror() error {
 func Handle(method string, params string) string {
 	ReceiveChannel <- ZMessage{tag: method, content: params}
 	response := <-ResponseChannel
+	println("returning" + response)
 	return response
 }
