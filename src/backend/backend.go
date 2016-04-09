@@ -226,6 +226,7 @@ func Bootstrap(server *apiserver.APIServer) bool {
 	for _, superrec := range records {
 		if superrec.Content == zmq.GetPublicIP() {
 			dnsimple.DeleteRecord(client, zmq.GetPublicIP())
+			records = dnsimple.GetRecords(client)
 		}
 	}
 	if len(records) < constants.MaxSuperNumber {
