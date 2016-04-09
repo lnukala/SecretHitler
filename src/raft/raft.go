@@ -317,7 +317,7 @@ func (s *Store) GetRoom(roomId int) string {
 * Pass in a CSV object, change to struct, then store it!
 * Returns true if successful
 */
-func (s *Store) StoreUser(passedObj string) {
+func (s *Store) StoreUser(passedObj string) User{
 
 	var room Room
 
@@ -339,6 +339,7 @@ func (s *Store) StoreUser(passedObj string) {
 	stringObj = string(byteObj)
 	//----TODO This is the same hack, fix it!
 	s.Set("0", stringObj)
+	return user
 }
 
 // GetUser Get user from raft store
