@@ -296,7 +296,7 @@ func (f *fsmSnapshot) Release() {}
 /**
 * Get our room object if able, or create it if it doesn't exist
  */
-func (s *Store) GetRoom(roomId int) string {
+func (s *Store) GetRoom(roomId int) []byte {
 
 	roomString := strconv.Itoa(roomId)
 	response, err := s.Get(roomString)
@@ -306,10 +306,10 @@ func (s *Store) GetRoom(roomId int) string {
 		jsonObj, _ := json.Marshal(room)
 		stringObj := string(jsonObj)
 		s.Set(roomString, stringObj)
-		return stringObj
+		return jsonObj
 	}
-
-	return response
+	byteResponse := []byte(response)
+	return byteResponse
 
 }
 
