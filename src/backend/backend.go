@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"raft"
 	"strconv"
 	"strings"
 	"time"
 	"userinfo"
 	"zmq"
 
+	"github.com/GiterLab/urllib"
 	"github.com/deckarep/golang-set"
 )
 
@@ -25,6 +27,9 @@ type CommunicationState struct {
 
 /*State :the state of the backend communication infra*/
 var State CommunicationState
+
+/*RoomState :room of the player*/
+var RoomState = raft.Room{}
 
 //Supernodes :et of the supernodes currently in the system
 var Supernodes = mapset.NewSet()
@@ -130,7 +135,7 @@ func Publish(topic string, method string, params string) {
 	State.PublishChannel <- pubmsg
 }
 
-// Handle  handle all received messages
+//Handle  handle all received messages
 func Handle() {
 	for {
 		z := <-zmq.ReceiveChannel
@@ -158,6 +163,31 @@ func Handle() {
 		case "adduser":
 			api := apiserver.GetServer()
 			api.AddUser(params)
+		case "newPlayer":
+			Subscribe(params, RoomState.GlobalComTopicName)
+			RoomState.CurrPlayers = RoomState.CurrPlayers + ", " + params
+			request := urllib.Post("http://127.0.0.1:8000/add_base_room/")
+			var roomjson = map[string]interface{}{"room_id": RoomState.RoomId,
+				"curr_players":                   RoomState.CurrPlayers,
+				"global_comm_topic_name":         RoomState.GlobalComTopicName,
+				"global_notification_topic_name": RoomState.GlobalNotificationTopicName,
+				"no_of_policies_passed":          RoomState.NoPoliciesPassed,
+				"fascist_policies_passed":        RoomState.FascistPolciesPassed,
+				"liberal_policies_passed":        RoomState.LiberalPoliciesPassed,
+				"current_fascist_in_deck":        RoomState.CurrentFascistInDeck,
+				"current_liberal_in_deck":        RoomState.CurrentLiberalInDeck,
+				"current_total_in_deck":          RoomState.CurrentTotalInDeck,
+				"chancellor_id":                  RoomState.ChancellorId,
+				"president_id":                   RoomState.PresidentId,
+				"president_channel":              RoomState.PresidentChannel,
+				"chancellor_channel":             RoomState.ChancelorChannel,
+				"hitler_id":                      RoomState.HitlerId}
+			request, err := request.JsonBody(roomjson)
+			if err == nil {
+				println(err.Error())
+			} else {
+				request.String()
+			}
 		default:
 			println("No logic added to handle this method. Please check!")
 		}
@@ -179,7 +209,7 @@ func cleanRecords() {
 }
 
 // Bootstrap  bootstrap routine
-func Bootstrap(server *apiserver.APIServer) bool{
+func Bootstrap(server *apiserver.APIServer) bool {
 	cleanRecords()
 	client := dnsimple.GetClient()
 	records := dnsimple.GetRecords(client)
@@ -201,5 +231,15 @@ func Bootstrap(server *apiserver.APIServer) bool{
 		server.AttachTo(MySuper)                                              // tell apiserver I attache to a Supernode
 		server.SetSuper(false)                                                // I'm a subnode
 	}
-	return isSuper;
+	return isSuper
+}
+
+//NewPlayer  : HANDLE NEW players
+func NewPlayer(roominfo raft.Room) {
+	RoomState = roominfo
+	players := strings.Split(roominfo.CurrPlayers, ",")
+	for i := 0; i < len(players); i++ {
+		Subscribe(players[i], roominfo.GlobalComTopicName)
+		Request(players[i], "newPlayer"+constants.Delimiter+zmq.GetPublicIP())
+	}
 }
