@@ -2,7 +2,9 @@ package apiserver
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
@@ -78,8 +80,24 @@ func GetServer() *APIServer {
 	})
 
 	// login  return json data including the succes information
-	singleServer.m.Get("/login", func(args martini.Params, r render.Render) {
-		r.JSON(http.StatusOK, map[string]interface{}{"uid": -1, "is_super": singleServer.super})
+	singleServer.m.Get("/login", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		var username string
+		for key, value := range v {
+			if key == "username" {
+				username = value[0]
+			}
+		}
+
+		var nodeType string
+		if singleServer.super == true {
+			nodeType = "supernode"
+		} else {
+			nodeType = "subnode"
+		}
+		var json = map[string]interface{}{"user_id": singleServer.uid, "name": username, "user_type": "liberal", "node_type": nodeType, "secret_role": "hitler"}
+		r.JSON(http.StatusOK, json)
 	})
 
 	// rooms  list all the rooms
