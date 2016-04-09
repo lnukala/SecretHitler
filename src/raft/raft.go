@@ -302,7 +302,7 @@ func (s *Store) GetRoom(roomId int) []byte {
 	response, err := s.Get(roomString)
 
 	if err != nil {
-		room := Room{roomId, zmq.GetPublicIP(), "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
+		room := Room{roomId, "", "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
 		jsonObj, _ := json.Marshal(room)
 		stringObj := string(jsonObj)
 		s.Set(roomString, stringObj)
@@ -317,7 +317,7 @@ func (s *Store) GetRoom(roomId int) []byte {
 * Pass in a CSV object, change to struct, then store it!
 * Returns true if successful
 */
-func (s *Store) StoreUser(passedObj string) User{
+func (s *Store) StoreUser(passedObj string) {
 	var room Room
 	tokenArray := strings.Split(passedObj, ",")
 	user := User{tokenArray[0], tokenArray[1], tokenArray[2], tokenArray[3], tokenArray[4]}
@@ -327,16 +327,18 @@ func (s *Store) StoreUser(passedObj string) User{
 
 	//----Also need to update the room list!
 	//----TODO this is a hack, we need to pass the room code
-	stringObj, _ = s.Get("0")
-	byteObj := []byte(stringObj)
-	json.Unmarshal(byteObj, &room)
-	room.CurrPlayers += "," + tokenArray[0]
-	byteObj, _ = json.Marshal(room)
-	stringObj = string(byteObj)
+	jsonObj = s.GetRoom(0)
+	json.Unmarshal(jsonObj, &room)
+	if (strings.Compare(room.CurrPlayers, "") == 0) {
+		room.CurrPlayers = zmq.GetPublicIP()
+	} else {
+		room.CurrPlayers += "," + zmq.GetPublicIP()
+	}
+	jsonObj, _ = json.Marshal(room)
+	stringObj = string(jsonObj)
 	//----TODO This is the same hack, fix it!
 	s.Set("0", stringObj)
 
-	return user
 }
 
 // GetUser Get user from raft store
