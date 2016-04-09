@@ -320,6 +320,7 @@ func (s *Store) StoreUser(passedObj map[string]interface{}) {
 	var userType string
 	var nodeType string
 	var secretRole string
+	var room Room
 
         uid = passedObj["user_id"].(int)
 	name = passedObj["name"].(string)
@@ -334,6 +335,16 @@ func (s *Store) StoreUser(passedObj map[string]interface{}) {
 	stringObj := string(jsonObj)
         s.Set(stringId, stringObj)
 
+	//----Also need to update the room list!
+	//----TODO this is a hack, we need to pass the room code 
+	stringObj, _ = s.Get("0")
+	byteObj := []byte(stringObj)
+	json.Unmarshal(byteObj, &room)
+	room.CurrPlayers += "," + name
+	byteObj, _ = json.Marshal(room)
+	stringObj = string(byteObj)
+	//----TODO This is the same hack, fix it!
+	s.Set("0", stringObj)
 }
 
 // GetUser Get user from raft store
