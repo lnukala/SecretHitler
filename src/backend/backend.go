@@ -150,7 +150,7 @@ func Handle() {
 			Subscribe(params, "supernode") // subscribe back
 			Subscribe(params, "subnode")
 			userinfo.AddUser(userinfo.User{UID: params, Addr: params, IsSuper: true})
-			raft.RaftInstance.Join(params) //add ip to RaftInstance
+			raft.RaftStore.Join(params) //add ip to RaftInstance
 		case "promoteREP":
 			///TODO: Add logic for handling responses to promotion requests
 		case "demote":
@@ -222,6 +222,13 @@ func Bootstrap(server *apiserver.APIServer) bool {
 	client := dnsimple.GetClient()
 	records := dnsimple.GetRecords(client)
 	fmt.Println("Existing Supernodes: " + strconv.Itoa(len(records)))
+	//delete your own entry from dns in case it exists
+	for _, superrec := range records {
+		if superrec.Content == zmq.GetPublicIP() {
+			dnsimple.DeleteRecord(client, zmq.GetPublicIP())
+			records = dnsimple.GetRecords(client)
+		}
+	}
 	if len(records) < constants.MaxSuperNumber {
 		Promote() // tell other supernodesI'm a supernode and subscribe
 		for _, superrec := range records {

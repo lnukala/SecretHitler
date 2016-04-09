@@ -10,7 +10,6 @@ import (
 
 // RaftStore : Global variable
 
-
 func main() {
 	s := api.GetServer()
 	s.SetUID(zmq.GetPublicIP())
@@ -27,7 +26,7 @@ func main() {
 
 	//----TODO Integrate GetRoom as necessry
 	if isSuper { //----We only set up sn stuff if we're a sn
-		raft.RaftStore := raft.New()
+		raft.RaftStore = raft.New()
 		raft.RaftStore.InitRaft()
 		//api.RaftStore = RaftStore
 		//room := raft.GetRoom(0) //TODO This is the magical room id, should probably get changed at some point

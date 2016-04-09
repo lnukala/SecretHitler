@@ -9,8 +9,8 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strings"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 	"zmq"
@@ -57,15 +57,15 @@ type Room struct {
 }
 
 type User struct {
-	UserId   string
-	Name     string
-	UserType string
-	NodeType string
+	UserId     string
+	Name       string
+	UserType   string
+	NodeType   string
 	SecretRole string
 }
 
 //RaftStore : Global variable exposed
-var RaftStore Store
+var RaftStore *Store
 
 //New : returns a new Store.
 func New() *Store {
@@ -316,14 +316,14 @@ func (s *Store) GetRoom(roomId int) string {
 /**
 * Pass in a CSV object, change to struct, then store it!
 * Returns true if successful
-*/
+ */
 func (s *Store) StoreUser(passedObj string) {
 	var room Room
 	tokenArray := strings.Split(passedObj, ",")
-	user := User{tokenArray[0], tokenArray[1], tokenArray[2], tokenArray[3],tokenArray[4]}
-        jsonObj, _ := json.Marshal(user)
+	user := User{tokenArray[0], tokenArray[1], tokenArray[2], tokenArray[3], tokenArray[4]}
+	jsonObj, _ := json.Marshal(user)
 	stringObj := string(jsonObj)
-        s.Set(tokenArray[0], stringObj)
+	s.Set(tokenArray[0], stringObj)
 
 	//----Also need to update the room list!
 	//----TODO this is a hack, we need to pass the room code

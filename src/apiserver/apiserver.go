@@ -104,6 +104,7 @@ func GetServer() *APIServer {
 
 		//Creating the user json
 		var userjson = map[string]interface{}{"user_id": singleServer.uid, "name": username, "user_type": "liberal", "node_type": nodeType, "secret_role": "hitler"}
+
 		//Call the DNS to send the requet to a super node
 		registerationrequest := urllib.Post("http://secrethitler.lnukala.me:3000/registeruser/")
 		registerationrequest, err := registerationrequest.JsonBody(userjson)
