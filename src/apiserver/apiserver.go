@@ -79,7 +79,7 @@ func GetServer() *APIServer {
 
 	// login  return json data including the succes information
 	singleServer.m.Get("/login", func(args martini.Params, r render.Render) {
-		r.JSON(http.StatusOK, map[string]interface{}{"uid": -1, "is_super": singleServer.super})
+		r.JSON(http.StatusOK, map[string]interface{}{"uid": singleServer.uid, "is_super": singleServer.super})
 	})
 
 	// rooms  list all the rooms
