@@ -299,18 +299,19 @@ func (f *fsmSnapshot) Release() {}
 func (s *Store) GetRoom(roomId int) Room {
 
 	var roomResponse Room
-
 	roomString := strconv.Itoa(roomId)
-	response, err := s.Get(roomString)
+	response, _ := s.Get(roomString)
 
-
-	if err != nil {
+	if len(response) == 0 {
+		print("Creating new room!!!!")
 		room := Room{roomId, "", "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
 		jsonObj, _ := json.Marshal(room)
 		stringObj := string(jsonObj)
 		s.Set(roomString, stringObj)
 		return room
 	}
+
+	print("Returning the old room!!!")
 	byteResponse := []byte(response)
 	json.Unmarshal(byteResponse, &roomResponse)
 	return roomResponse
@@ -320,11 +321,11 @@ func (s *Store) GetRoom(roomId int) Room {
 /**
 * Pass in a CSV object, change to struct, then store it!
 * Returns true if successful
-*/
+ */
 func (s *Store) StoreUser(passedObj string) {
 	var room Room
-
-	tokenArray := strings.Split(passedObj, ",")
+	shortObj := passedObj[1 : len(passedObj)-1]
+	tokenArray := strings.Split(shortObj, ",")
 	user := User{tokenArray[0], tokenArray[1], tokenArray[2], tokenArray[3], tokenArray[4]}
 	jsonObj, _ := json.Marshal(user)
 	stringObj := string(jsonObj)
@@ -333,11 +334,12 @@ func (s *Store) StoreUser(passedObj string) {
 	//----Also need to update the room list!
 	//----TODO this is a hack, we need to pass the room code
 	room = s.GetRoom(0)
-	if (strings.Compare(room.CurrPlayers, "") == 0) {
+	if strings.Compare(room.CurrPlayers, "") == 0 {
 		room.CurrPlayers = zmq.GetPublicIP()
 	} else {
 		room.CurrPlayers += "," + tokenArray[0]
 	}
+	print("\n\nUSERLIST ---------- " + room.CurrPlayers + "\n")
 	jsonObj, _ = json.Marshal(room)
 	stringObj = string(jsonObj)
 	//----TODO This is the same hack, fix it!
