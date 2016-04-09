@@ -39,7 +39,7 @@ type command struct {
 
 type Room struct {
 	RoomId                      int
-	CurrPlayers                 []string
+	CurrPlayers                 string
 	GlobalComTopicName          string
 	GlobalNotificationTopicName string
 	NoPoliciesPassed            int
@@ -56,10 +56,11 @@ type Room struct {
 }
 
 type User struct {
-	UserId   string
+	UserId   int
 	Name     string
 	UserType string
 	NodeType string
+	SecretRole string
 }
 
 //New : returns a new Store.
@@ -297,9 +298,7 @@ func (s *Store) GetRoom(roomId int) []byte {
 	response, _ := s.Get(roomString)
 
 	if response == nil {
-		//----TODO Slice is currently set for 4, may need to be changed later. Keep this in mind.
-		room := Room{roomId, make([]string, 4), "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
-		room.CurrPlayers[0] = zmq.GetPublicIP()
+		room := Room{roomId, zmq.GetPublicIP(), "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
 		jsonObj, _ := json.Marshal(room)
 		s.Set(roomString, jsonObj)
 		return jsonObj
@@ -309,19 +308,35 @@ func (s *Store) GetRoom(roomId int) []byte {
 
 }
 
-// StoreUser  store user into raft as a string
-func (s *Store) StoreUser(user User) {
-	m := make(map[string]string)
-	m["user_id"] = user.UserId
-	m["name"] = user.Name
-	m["user_type"] = user.UserType
-	m["node_type"] = user.NodeType
-	str, _ := json.Marshal(m)
-	s.Set(user.UserId, str)
+/**
+* Pass in a JSON object, change to struct, then store it!
+* Returns true if successful
+*/
+func (s *Store) StoreUser(passedObj map[string]interface{}) {
+
+	var uid int
+	var name string
+	var userType string
+	var nodeType string
+	var secretRole string
+
+        uid = passedObj["user_id"].(int)
+	name = passedObj["name"].(string)
+	userType = passedObj["user_type"].(string)
+	nodeType = passedObj["node_type"].(string)
+	secretRole = passedObj["secret_role"].(string)
+
+	user := User{uid, name, userType, nodeType, secretRole}
+
+        jsonObj, _ := json.Marshal(user)
+	stringId := strconv.Itoa(uid)
+        s.Set(stringId, jsonObj)
+
 }
 
-// GetUser   get user from raft store
-func (s *Store) GetUser(userID string) string {
-	response, _ := s.Get(userID)
-	return string(response)
+// GetUser Get user from raft store
+func (s *Store) GetUser(userId int) []byte {
+	intId := strconv.Itoa(userId)
+	response, _ := s.Get(intId)
+	return response
 }
