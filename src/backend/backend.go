@@ -25,6 +25,8 @@ type CommunicationState struct {
 	RequestChanMap  map[string]zmq.RequestChannels
 }
 
+const success = "true"
+
 /*State :the state of the backend communication infra*/
 var State CommunicationState
 
@@ -73,13 +75,13 @@ func Request(ip string, message string) (string, error) {
 	response := zmq.SendREQ(message, State.RequestChanMap[ip])
 	if response.Geterror() != nil {
 		println("[Backend request]" + response.Geterror().Error())
+	} else if response.Getmessage() == success {
+		println("received success response!")
+	} else if strings.Contains(response.Getmessage(), constants.Delimiter) == false {
+		println("delimiter not present in message received in promote")
 	} else {
-		if strings.Contains(message, constants.Delimiter) == false {
-			println("delimiter not present in message received in promote")
-		} else {
-			input := strings.SplitN(message, constants.Delimiter, 2)
-			zmq.Handle(input[0], input[1])
-		}
+		input := strings.SplitN(response.Getmessage(), constants.Delimiter, 2)
+		zmq.Handle(input[0], input[1])
 	}
 	return response.Getmessage(), response.Geterror()
 }
@@ -144,9 +146,11 @@ func Handle() {
 		switch method {
 		case "promoteREQ": // params: the IP address
 			Supernodes.Add(params)
+			println("promote request received for " + params)
 			Subscribe(params, "supernode") // subscribe back
 			Subscribe(params, "subnode")
 			userinfo.AddUser(userinfo.User{UID: params, Addr: params, IsSuper: true})
+			raft.RaftInstance.Join(params) //add ip to RaftInstance
 		case "promoteREP":
 			///TODO: Add logic for handling responses to promotion requests
 		case "demote":
@@ -160,9 +164,11 @@ func Handle() {
 			}
 			api := apiserver.GetServer()
 			api.AddUser(params)
+			zmq.ResponseChannel <- success
 		case "adduser":
 			api := apiserver.GetServer()
 			api.AddUser(params)
+			zmq.ResponseChannel <- success
 		case "newPlayer":
 			Subscribe(params, RoomState.GlobalComTopicName)
 			RoomState.CurrPlayers = RoomState.CurrPlayers + ", " + params
@@ -188,8 +194,10 @@ func Handle() {
 			} else {
 				request.String()
 			}
+			zmq.ResponseChannel <- success
 		default:
 			println("No logic added to handle this method. Please check!")
+			zmq.ResponseChannel <- success
 		}
 	}
 }

@@ -35,13 +35,13 @@ func main() {
 
 	time.Sleep(1000 * time.Millisecond)
 
-	/*backend.Subscribe("127.0.0.1", "topic")
+	backend.Subscribe("127.0.0.1", "topic")
 	time.Sleep(1000 * time.Millisecond)
 	backend.Publish("topic", "method", "params")
 	time.Sleep(1000 * time.Millisecond)
 	backend.UnsubscribeTopic("127.0.0.1", "topic")
 	time.Sleep(1000 * time.Millisecond)
-	backend.Publish("topic", "method", "params")*/
+	backend.Publish("topic", "method", "params")
 
 	select {}
 }

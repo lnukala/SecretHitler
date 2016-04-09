@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"strconv"
 	"sync"
 	"time"
@@ -56,10 +57,10 @@ type Room struct {
 }
 
 type User struct {
-	UserId     int
-	Name       string
-	UserType   string
-	NodeType   string
+	UserId   string
+	Name     string
+	UserType string
+	NodeType string
 	SecretRole string
 }
 
@@ -313,38 +314,34 @@ func (s *Store) GetRoom(roomId int) string {
 }
 
 /**
-* Pass in a JSON object, change to struct, then store it!
+* Pass in a CSV object, change to struct, then store it!
 * Returns true if successful
- */
-func (s *Store) StoreUser(passedObj map[string]interface{}) {
-
-	var uid int
-	var name string
-	var userType string
-	var nodeType string
-	var secretRole string
-
-	uid = passedObj["user_id"].(int)
-	name = passedObj["name"].(string)
-	userType = passedObj["user_type"].(string)
-	nodeType = passedObj["node_type"].(string)
-	secretRole = passedObj["secret_role"].(string)
-
-	user := User{uid, name, userType, nodeType, secretRole}
-
-	jsonObj, _ := json.Marshal(user)
-	stringId := strconv.Itoa(uid)
+*/
+func (s *Store) StoreUser(passedObj string) {
+	var room Room
+	tokenArray := strings.Split(passedObj, ",")
+	user := User{tokenArray[0], tokenArray[1], tokenArray[2], tokenArray[3],tokenArray[4]}
+        jsonObj, _ := json.Marshal(user)
 	stringObj := string(jsonObj)
-	s.Set(stringId, stringObj)
+        s.Set(tokenArray[0], stringObj)
 
+	//----Also need to update the room list!
+	//----TODO this is a hack, we need to pass the room code
+	stringObj, _ = s.Get("0")
+	byteObj := []byte(stringObj)
+	json.Unmarshal(byteObj, &room)
+	room.CurrPlayers += "," + tokenArray[0]
+	byteObj, _ = json.Marshal(room)
+	stringObj = string(byteObj)
+	//----TODO This is the same hack, fix it!
+	s.Set("0", stringObj)
 }
 
 // GetUser Get user from raft store
-func (s *Store) GetUser(userId int) []byte {
+func (s *Store) GetUser(userId string) []byte {
 
 	var byteResponse []byte
-	intId := strconv.Itoa(userId)
-	response, _ := s.Get(intId)
+	response, _ := s.Get(userId)
 	byteResponse = []byte(response)
 	return byteResponse
 }
