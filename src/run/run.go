@@ -3,7 +3,6 @@ package main
 import (
 	api "apiserver"
 	"backend"
-	"dnsimple"
 	"raft"
 	"time"
 	"zmq"
@@ -21,10 +20,7 @@ func main() {
 	backend.State = backend.CommunicationState{PublishChannel: publishchannel,
 		SubscriptionMap: submap, RequestChanMap: channelMap}
 	go backend.Handle() //set up the handler for the messages received
-
-	client := dnsimple.GetClient()
-	records := dnsimple.GetRecords(client)
-	dnsimple.AddRecord(client)
+	backend.Bootstrap(s)
 
 	raft := raft.New()
 	raft.InitRaft()
