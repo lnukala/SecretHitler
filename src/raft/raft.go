@@ -38,21 +38,28 @@ type command struct {
 }
 
 type Room struct {
-        RoomId int
-        CurrPlayers []string
-        GlobalComTopicName string
-        GlobalNotificationTopicName string
-        NoPoliciesPassed int
-        FascistPolciesPassed int
-        LiberalPoliciesPassed int
-        CurrentFascistInDeck int
-        CurrentLiberalInDeck int
-        CurrentTotalInDeck int
-        ChancellorId int
-        PresidentId int
-        PresidentChannel string
-        ChancelorChannel string
-        HitlerId int
+	RoomId                      int
+	CurrPlayers                 []string
+	GlobalComTopicName          string
+	GlobalNotificationTopicName string
+	NoPoliciesPassed            int
+	FascistPolciesPassed        int
+	LiberalPoliciesPassed       int
+	CurrentFascistInDeck        int
+	CurrentLiberalInDeck        int
+	CurrentTotalInDeck          int
+	ChancellorId                int
+	PresidentId                 int
+	PresidentChannel            string
+	ChancelorChannel            string
+	HitlerId                    int
+}
+
+type User struct {
+	UserId   string
+	Name     string
+	UserType string
+	NodeType string
 }
 
 //New : returns a new Store.
@@ -283,15 +290,15 @@ func (f *fsmSnapshot) Release() {}
 
 /**
 * Get our room object if able, or create it if it doesn't exist
-*/
+ */
 func (s *Store) GetRoom(roomId int) []byte {
 
 	roomString := strconv.Itoa(roomId)
 	response, _ := s.Get(roomString)
 
-	if(response == nil) {
+	if response == nil {
 		//----TODO Slice is currently set for 4, may need to be changed later. Keep this in mind.
-		room := Room{roomId, make([]string, 4), "coms", "notifications",  0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
+		room := Room{roomId, make([]string, 4), "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
 		room.CurrPlayers[0] = zmq.GetPublicIP()
 		jsonObj, _ := json.Marshal(room)
 		s.Set(roomString, jsonObj)
@@ -300,4 +307,21 @@ func (s *Store) GetRoom(roomId int) []byte {
 
 	return response
 
+}
+
+// StoreUser  store user into raft as a string
+func (s *Store) StoreUser(user User) {
+	m := make(map[string]string)
+	m["user_id"] = user.UserId
+	m["name"] = user.Name
+	m["user_type"] = user.UserType
+	m["node_type"] = user.NodeType
+	str, _ := json.Marshal(m)
+	s.Set(user.UserId, str)
+}
+
+// GetUser   get user from raft store
+func (s *Store) GetUser(userID string) string {
+	response, _ := s.Get(userID)
+	return string(response)
 }
