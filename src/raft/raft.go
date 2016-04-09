@@ -32,6 +32,9 @@ type Store struct {
 	logger *log.Logger
 }
 
+//RaftInstance : of raft being used
+var RaftInstance *Store
+
 type command struct {
 	Op    string `json:"op,omitempty"`
 	Key   string `json:"key,omitempty"`
@@ -327,7 +330,7 @@ func (s *Store) StoreUser(passedObj string) {
         s.Set(tokenArray[0], stringObj)
 
 	//----Also need to update the room list!
-	//----TODO this is a hack, we need to pass the room code 
+	//----TODO this is a hack, we need to pass the room code
 	stringObj, _ = s.Get("0")
 	byteObj := []byte(stringObj)
 	json.Unmarshal(byteObj, &room)
