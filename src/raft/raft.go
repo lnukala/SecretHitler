@@ -337,8 +337,8 @@ func (s *Store) StoreUser(passedObj string) {
 	if strings.Compare(room.CurrPlayers, "") == 0 {
 		room.CurrPlayers = zmq.GetPublicIP()
 	} else {
-		if(!strings.Contains(room.CurrPlayers, tokenArray[0])) {
-	               room.CurrPlayers += "," + tokenArray[0]
+		if !strings.Contains(room.CurrPlayers, tokenArray[0]) {
+			room.CurrPlayers += "," + tokenArray[0]
 		}
 	}
 	print("\n\nUSERLIST ---------- " + room.CurrPlayers + "\n")
