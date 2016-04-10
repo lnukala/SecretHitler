@@ -151,7 +151,7 @@ func Handle() {
 			Subscribe(params, "supernode") // subscribe back
 			Subscribe(params, "subnode")
 			userinfo.AddUser(userinfo.User{UID: params, Addr: params, IsSuper: true})
-			raft.RaftStore.Join(params) //add ip to RaftInstance
+			zmq.ResponseChannel <- success
 		case "promoteREP":
 			///TODO: Add logic for handling responses to promotion requests
 		case "demote":
@@ -195,6 +195,9 @@ func Handle() {
 			} else {
 				request.String()
 			}
+			zmq.ResponseChannel <- success
+		case "raftPromote":
+			raft.RaftStore.Join(params + "5577")
 			zmq.ResponseChannel <- success
 		default:
 			println("No logic added to handle this method. Please check!")
