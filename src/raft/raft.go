@@ -95,10 +95,6 @@ func (s *Store) InitRaft() error {
 	//Define the port and ip that raft will bind on
 	raftbind := "127.0.0.1:5557"
 
-	//get a list of peers
-	peers := raft.StaticPeers.StaticPeers
-	println(peers)
-
 	// Setup Raft communication.
 	addr, err := net.ResolveTCPAddr("tcp", raftbind)
 	if err != nil {
@@ -108,9 +104,6 @@ func (s *Store) InitRaft() error {
 	if err != nil {
 		return err
 	}
-
-	peers := raft.StaticPeers.StaticPeers
-	println(peers)
 
 	// Create peer storage.
 	peerStore := raft.NewJSONPeers("raftdb", transport)

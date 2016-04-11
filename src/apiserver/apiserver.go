@@ -26,7 +26,7 @@ type APIServer struct {
 var singleServer *APIServer
 
 //RaftStore : Global variable for store
-var RaftStore raft.Store
+var RaftStore *raft.Store
 
 //NewPlayerChannel :new player info is passed here
 var NewPlayerChannel = make(chan raft.Room)

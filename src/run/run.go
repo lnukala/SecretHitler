@@ -28,8 +28,8 @@ func main() {
 	if isSuper { //----We only set up sn stuff if we're a sn
 		raft.RaftStore = raft.New()
 		raft.RaftStore.InitRaft()
+		api.RaftStore = raft.RaftStore
 		backend.Publish("supernode", "raftPromote", zmq.GetPublicIP())
-		//api.RaftStore = RaftStore
 		//room := raft.GetRoom(0) //TODO This is the magical room id, should probably get changed at some point
 	}
 	time.Sleep(1000 * time.Millisecond)

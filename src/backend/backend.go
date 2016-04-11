@@ -50,7 +50,7 @@ func Subscribe(ip string, topic string) {
 		return
 	}
 	//if not subscribes, subscribe and set the state
-	go zmq.ClientSetupSUB(ip, "topic")
+	go zmq.ClientSetupSUB(ip, topic)
 	if State.SubscriptionMap[ip] == nil {
 		topicmap := make(map[string]bool)
 		topicmap[topic] = true
@@ -197,7 +197,7 @@ func Handle() {
 			}
 			zmq.ResponseChannel <- success
 		case "raftPromote":
-			raft.RaftStore.Join(params + "5577")
+			raft.RaftStore.Join(params + ":5557")
 			zmq.ResponseChannel <- success
 		default:
 			println("No logic added to handle this method. Please check!")
