@@ -95,7 +95,7 @@ func (s *Store) InitRaft() error {
 	}
 
 	//Define the port and ip that raft will bind on
-	raftbind := "127.0.0.1:5557"
+	raftbind := ":5557"
 
 	// Setup Raft communication.
 	addr, err := net.ResolveTCPAddr("tcp", raftbind)
