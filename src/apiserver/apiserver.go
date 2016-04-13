@@ -25,9 +25,6 @@ type APIServer struct {
 
 var singleServer *APIServer
 
-//RaftStore : Global variable for store
-var RaftStore *raft.Store
-
 //NewPlayerChannel :new player info is passed here
 var NewPlayerChannel = make(chan raft.Room)
 
@@ -162,7 +159,7 @@ func GetServer() *APIServer {
 		// 	"hitler_id":                      -1}
 
 		var roomjson = map[string]interface{}{
-			"room_id":                        RoomState.RoomId,
+			"room_id":                        RoomState.RoomID,
 			"curr_players":                   RoomState.CurrPlayers,
 			"global_comm_topic_name":         RoomState.GlobalComTopicName,
 			"global_notification_topic_name": RoomState.GlobalNotificationTopicName,
@@ -172,11 +169,11 @@ func GetServer() *APIServer {
 			"current_fascist_in_deck":        RoomState.CurrentFascistInDeck,
 			"current_liberal_in_deck":        RoomState.CurrentLiberalInDeck,
 			"current_total_in_deck":          RoomState.CurrentTotalInDeck,
-			"chancellor_id":                  RoomState.ChancellorId,
-			"president_id":                   RoomState.PresidentId,
+			"chancellor_id":                  RoomState.ChancellorID,
+			"president_id":                   RoomState.PresidentID,
 			"president_channel":              RoomState.PresidentChannel,
 			"chancellor_channel":             RoomState.ChancelorChannel,
-			"hitler_id":                      RoomState.HitlerId}
+			"hitler_id":                      RoomState.HitlerID}
 
 		//Getting the room json and calling the update
 		print("Calling the room info update method!!")

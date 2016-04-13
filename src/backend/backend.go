@@ -174,7 +174,7 @@ func Handle() {
 			Subscribe(params, RoomState.GlobalComTopicName)
 			RoomState.CurrPlayers = RoomState.CurrPlayers + ", " + params
 			request := urllib.Post("http://127.0.0.1:8000/add_base_room/")
-			var roomjson = map[string]interface{}{"room_id": RoomState.RoomId,
+			var roomjson = map[string]interface{}{"room_id": RoomState.RoomID,
 				"curr_players":                   RoomState.CurrPlayers,
 				"global_comm_topic_name":         RoomState.GlobalComTopicName,
 				"global_notification_topic_name": RoomState.GlobalNotificationTopicName,
@@ -184,11 +184,11 @@ func Handle() {
 				"current_fascist_in_deck":        RoomState.CurrentFascistInDeck,
 				"current_liberal_in_deck":        RoomState.CurrentLiberalInDeck,
 				"current_total_in_deck":          RoomState.CurrentTotalInDeck,
-				"chancellor_id":                  RoomState.ChancellorId,
-				"president_id":                   RoomState.PresidentId,
+				"chancellor_id":                  RoomState.ChancellorID,
+				"president_id":                   RoomState.PresidentID,
 				"president_channel":              RoomState.PresidentChannel,
 				"chancellor_channel":             RoomState.ChancelorChannel,
-				"hitler_id":                      RoomState.HitlerId}
+				"hitler_id":                      RoomState.HitlerID}
 			request, err := request.JsonBody(roomjson)
 			if err == nil {
 				println(err.Error())

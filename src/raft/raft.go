@@ -38,8 +38,9 @@ type command struct {
 	Value string `json:"value,omitempty"`
 }
 
+//Room : represents the room structure to store room state
 type Room struct {
-	RoomId                      int
+	RoomID                      int
 	CurrPlayers                 string
 	GlobalComTopicName          string
 	GlobalNotificationTopicName string
@@ -49,15 +50,16 @@ type Room struct {
 	CurrentFascistInDeck        int
 	CurrentLiberalInDeck        int
 	CurrentTotalInDeck          int
-	ChancellorId                int
-	PresidentId                 int
+	ChancellorID                int
+	PresidentID                 int
 	PresidentChannel            string
 	ChancelorChannel            string
-	HitlerId                    int
+	HitlerID                    int
 }
 
+//User : structure respresenting the user information stored
 type User struct {
-	UserId     string
+	UserID     string
 	Name       string
 	UserType   string
 	NodeType   string
@@ -178,7 +180,7 @@ func (s *Store) Delete(key string) error {
 	return nil
 }
 
-// Join joins a node, located at addr, to this store. The node must be ready to
+// Join :joins a node, located at addr, to this store. The node must be ready to
 // respond to Raft communications at that address.
 func (s *Store) Join(addr string) error {
 	s.logger.Printf("received join request for remote node as %s", addr)
@@ -293,18 +295,15 @@ func (f *fsmSnapshot) Persist(sink raft.SnapshotSink) error {
 
 func (f *fsmSnapshot) Release() {}
 
-/**
-* Get our room object if able, or create it if it doesn't exist
- */
-func (s *Store) GetRoom(roomId int) Room {
-
+/*GetRoom : Get our room object if able, or create it if it doesn't exist*/
+func (s *Store) GetRoom(roomID int) Room {
 	var roomResponse Room
-	roomString := strconv.Itoa(roomId)
+	roomString := strconv.Itoa(roomID)
 	response, _ := s.Get(roomString)
 
 	if len(response) == 0 {
 		print("Creating new room!!!!")
-		room := Room{roomId, "", "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
+		room := Room{roomID, "", "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
 		jsonObj, _ := json.Marshal(room)
 		stringObj := string(jsonObj)
 		s.Set(roomString, stringObj)
@@ -315,13 +314,10 @@ func (s *Store) GetRoom(roomId int) Room {
 	byteResponse := []byte(response)
 	json.Unmarshal(byteResponse, &roomResponse)
 	return roomResponse
-
 }
 
-/**
-* Pass in a CSV object, change to struct, then store it!
-* Returns true if successful
- */
+/*StoreUser :Pass in a CSV object, change to struct, then store it!
+* Returns true if successful*/
 func (s *Store) StoreUser(passedObj string) {
 	var room Room
 	shortObj := passedObj[1 : len(passedObj)-1]
@@ -350,10 +346,9 @@ func (s *Store) StoreUser(passedObj string) {
 }
 
 // GetUser Get user from raft store
-func (s *Store) GetUser(userId string) []byte {
-
+func (s *Store) GetUser(userID string) []byte {
 	var byteResponse []byte
-	response, _ := s.Get(userId)
+	response, _ := s.Get(userID)
 	byteResponse = []byte(response)
 	return byteResponse
 }

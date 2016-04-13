@@ -2,7 +2,7 @@
 
 echo "Installing the packages required to run project"
 echo "If some github packages are not present in the repo, please do a go get"
-
+rm -rf raftdb
 go install zmq
 go install dnsimple
 go install constants
