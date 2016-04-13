@@ -89,7 +89,7 @@ func (s *Store) InitRaft() error {
 
 	// Allow the node to entry single-mode, potentially electing itself, if
 	// explicitly enabled and there is only 1 node in the cluster already.
-	if len(records) <= 1 {
+	if len(records) <= 2 {
 		config.EnableSingleNode = true
 		config.DisableBootstrapAfterElect = false
 	}
