@@ -305,8 +305,8 @@ func (s *Store) GetRoom(roomID int) Room {
 		print("Creating new room!!!!")
 		room := Room{roomID, "", "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
 		jsonObj, _ := json.Marshal(room)
-		stringObj := string(jsonObj)
-		s.Set(roomString, stringObj)
+		response = string(jsonObj)
+		s.Set(roomString, response)
 		return room
 	}
 

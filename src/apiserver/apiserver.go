@@ -103,12 +103,17 @@ func GetServer() *APIServer {
 		}
 
 		//Creating the user json
-		var userjson = map[string]interface{}{"user_id": singleServer.uid, "name": username, "user_type": "liberal", "node_type": nodeType, "secret_role": "hitler"}
-		var registerationjson = singleServer.uid + "," + username + "," + "liberal" + "," + nodeType + "," + "hitler"
+		var userjson = map[string]interface{}{"user_id": singleServer.uid,
+			"name": username, "user_type": "liberal", "node_type": nodeType,
+			"secret_role": "hitler"}
+		var registerationjson = singleServer.uid + "," +
+			username + "," + "liberal" + "," + nodeType + "," + "hitler"
 		//Call the DNS to send the requet to a super node
 		registerationrequest := urllib.Post("http://secrethitler.lnukala.me:3000/registeruser/")
 		registerationrequest, err := registerationrequest.JsonBody(registerationjson)
 		if err != nil {
+			println(err.Error())
+			r.Error(500)
 		}
 		registerationrequest.String()
 
@@ -116,6 +121,13 @@ func GetServer() *APIServer {
 		print("Calling the get room method!!")
 		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
 		roomrequest.String()
+
+		//calling the method to tell others you have joined
+		room := raft.Room{}
+		data, _ := roomrequest.Bytes()
+		json.Unmarshal(data, &room)
+		NewPlayerChannel <- room
+
 		//Getting the room json and calling the update
 		r.JSON(http.StatusOK, userjson)
 	})
@@ -132,7 +144,8 @@ func GetServer() *APIServer {
 		}
 		print("User id queries - " + userid)
 		//Get the user details from gavins method and return to front end
-		var userjson = map[string]interface{}{"user_id": userid, "name": "test_user", "user_type": "liberal", "node_type": "test_role", "secret_role": "hitler"}
+		var userjson = map[string]interface{}{"user_id": userid, "name": "test_user",
+			"user_type": "liberal", "node_type": "test_role", "secret_role": "hitler"}
 		r.JSON(http.StatusOK, userjson)
 	})
 
@@ -141,22 +154,6 @@ func GetServer() *APIServer {
 		print("Getting the room details!!!!!!!!!!")
 		RoomState := raft.RaftStore.GetRoom(0)
 		print(RoomState.CurrPlayers)
-		// var roomjson = map[string]interface{}{
-		// 	"room_id":                        RoomState.RoomId,
-		// 	"curr_players":                   RoomState.CurrPlayers,
-		// 	"global_comm_topic_name":         "coms",
-		// 	"global_notification_topic_name": "notifications",
-		// 	"no_of_policies_passed":          0,
-		// 	"fascist_policies_passed":        0,
-		// 	"liberal_policies_passed":        0,
-		// 	"current_fascist_in_deck":        11,
-		// 	"current_liberal_in_deck":        6,
-		// 	"current_total_in_deck":          17,
-		// 	"chancellor_id":                  -1,
-		// 	"president_id":                   -1,
-		// 	"president_channel":              "pres",
-		// 	"chancellor_channel":             "chan",
-		// 	"hitler_id":                      -1}
 
 		var roomjson = map[string]interface{}{
 			"room_id":                        RoomState.RoomID,
@@ -218,7 +215,8 @@ func GetServer() *APIServer {
 
 	// check if it's super node and see who it attach to
 	singleServer.m.Get("/issuper", func(args martini.Params, r render.Render) {
-		r.JSON(http.StatusOK, map[string]interface{}{"super": singleServer.super, "attach_to": singleServer.attachedTo})
+		r.JSON(http.StatusOK, map[string]interface{}{"super": singleServer.super,
+			"attach_to": singleServer.attachedTo})
 	})
 
 	// superlist  see the super node list
