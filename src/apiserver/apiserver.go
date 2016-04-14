@@ -3,10 +3,14 @@ package apiserver
 import (
 	"encoding/json"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"net/url"
 	raft "raft"
 	"room"
+	"strconv"
+	"strings"
+	"zmq"
 
 	"github.com/GiterLab/urllib"
 	"github.com/go-martini/martini"
@@ -28,6 +32,9 @@ var singleServer *APIServer
 
 //NewPlayerChannel :new player info is passed here
 var NewPlayerChannel = make(chan raft.Room)
+
+//RoomID : The ID of the room being returned
+var roomID int
 
 // RunServer : start the server
 func (s *APIServer) RunServer() {
@@ -146,10 +153,21 @@ func GetServer() *APIServer {
 
 	// Register User
 	singleServer.m.Post("/getroom", func(req *http.Request, r render.Render) {
-		print("Getting the room details!!!!!!!!!!")
-		RoomState := raft.RaftStore.GetRoom(0)
-		print(RoomState.CurrPlayers)
-
+		RoomState := raft.RaftStore.GetRoom(roomID)
+		players := strings.Split(RoomState.CurrPlayers, ",")
+		if len(players) >= 8 {
+			if roomID < math.MaxInt32 {
+				roomID = roomID + 1
+			} else {
+				roomID = 0 //avoid overflow
+			}
+			RoomState = raft.RaftStore.GetRoom(roomID)
+		}
+		RoomState.CurrPlayers = RoomState.CurrPlayers + "," + zmq.GetPublicIP()
+		println("[APISERVER] Current players in the room are " + RoomState.CurrPlayers)
+		jsonObj, _ := json.Marshal(RoomState)
+		roomstring := string(jsonObj)
+		raft.RaftStore.Set(strconv.Itoa(roomID), roomstring)
 		var roomjson = map[string]interface{}{
 			"room_id":                        RoomState.RoomID,
 			"curr_players":                   RoomState.CurrPlayers,

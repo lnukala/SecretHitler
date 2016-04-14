@@ -257,7 +257,7 @@ func Bootstrap(server *apiserver.APIServer) bool {
 	return isSuper
 }
 
-//HandleNewPlayer  : Handle new players
+//HandleNewPlayer : Handle new players
 func HandleNewPlayer() {
 	for {
 		RoomState = <-apiserver.NewPlayerChannel
