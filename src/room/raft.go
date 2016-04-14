@@ -1,10 +1,12 @@
 package room
 
 import (
+	"bytes"
 	"dnsimple"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -304,4 +306,24 @@ func (s *Store) IsLeader() bool {
 func (s *Store) Close() {
 	os.RemoveAll("roomdb") //delete the directory being used to store the data
 	s.raft.Shutdown()      //shut down the current raft session for the room
+}
+
+//ReadPeersJSON :read the peers in the game
+func ReadPeersJSON() ([]string, error) {
+	b, err := ioutil.ReadFile("roomdb/peers.json")
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	if len(b) == 0 {
+		return nil, nil
+	}
+
+	var peers []string
+	dec := json.NewDecoder(bytes.NewReader(b))
+	if err := dec.Decode(&peers); err != nil {
+		return nil, err
+	}
+
+	return peers, nil
 }
