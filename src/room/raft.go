@@ -2,7 +2,6 @@ package room
 
 import (
 	"bytes"
-	"dnsimple"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -81,17 +80,10 @@ func (s *Store) InitRoomRaft() error {
 	// Setup Raft configuration.
 	config := raft.DefaultConfig()
 
-	// Check for any existing peers.
-	client := dnsimple.GetClient()
-	dnsimple.PrintDomains(client)
-	records := dnsimple.GetRecords(client)
-
 	// Allow the node to entry single-mode, potentially electing itself, if
 	// explicitly enabled and there is only 1 node in the cluster already.
-	if len(records) <= 2 {
-		config.EnableSingleNode = true
-		config.DisableBootstrapAfterElect = false
-	}
+	config.EnableSingleNode = true
+	config.DisableBootstrapAfterElect = false
 
 	//Define the port and ip that raft will bind on
 	raftbind := ":5558"

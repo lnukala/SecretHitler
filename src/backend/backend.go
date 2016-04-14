@@ -264,7 +264,10 @@ func HandleNewPlayer() {
 		players := strings.Split(RoomState.CurrPlayers, ",")
 		for i := 0; i < len(players); i++ {
 			Subscribe(players[i], RoomState.GlobalComTopicName)
-			Request(players[i], "newPlayer"+constants.Delimiter+zmq.GetPublicIP())
+			if players[i] != zmq.GetPublicIP() {
+				println("[Backend] Sending new player request to " + players[i])
+				Request(players[i], "newPlayer"+constants.Delimiter+zmq.GetPublicIP())
+			}
 		}
 	}
 }
