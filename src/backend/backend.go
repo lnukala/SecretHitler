@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"raft"
+	"room"
 	"strconv"
 	"strings"
 	"time"
@@ -171,10 +172,12 @@ func Handle() {
 			api.AddUser(params)
 			zmq.ResponseChannel <- success
 		case "newPlayer":
-			Subscribe(params, RoomState.GlobalComTopicName)
+			Subscribe(params, RoomState.GlobalComTopicName) //subscribe to the new node
+			if room.RaftStore.IsLeader() == true {
+				room.RaftStore.Join(params) //If leader, add the new player to raft
+			}
 			RoomState.CurrPlayers = RoomState.CurrPlayers + ", " + params
 			request := urllib.Put("http://127.0.0.1:8000/update_room/")
-			//request := urllib.Post("http://127.0.0.1:8000/update_room/")
 			var roomjson = map[string]interface{}{"room_id": RoomState.RoomID,
 				"curr_players":                   RoomState.CurrPlayers,
 				"global_comm_topic_name":         RoomState.GlobalComTopicName,
@@ -254,7 +257,7 @@ func Bootstrap(server *apiserver.APIServer) bool {
 	return isSuper
 }
 
-//HandleNewPlayer  : HANDLE NEW players
+//HandleNewPlayer  : Handle new players
 func HandleNewPlayer() {
 	for {
 		RoomState = <-apiserver.NewPlayerChannel

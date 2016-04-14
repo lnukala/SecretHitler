@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	raft "raft"
+	"room"
 
 	"github.com/GiterLab/urllib"
 	"github.com/go-martini/martini"
@@ -122,12 +123,6 @@ func GetServer() *APIServer {
 		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
 		roomrequest.String()
 
-		//calling the method to tell others you have joined
-		room := raft.Room{}
-		data, _ := roomrequest.Bytes()
-		json.Unmarshal(data, &room)
-		NewPlayerChannel <- room
-
 		//Getting the room json and calling the update
 		r.JSON(http.StatusOK, userjson)
 	})
@@ -177,14 +172,24 @@ func GetServer() *APIServer {
 		roomrequest := urllib.Post("http://127.0.0.1:8000/add_base_room/")
 		roomrequest, err2 := roomrequest.JsonBody(roomjson)
 		if err2 != nil {
+			println(err2.Error())
+			r.Error(500)
 		}
 		roomrequest.String()
 
-		//calling the method to tell others you have joined
-		NewPlayerChannel <- RoomState
+		//Initialize raft for the game that you are about to join
+		if room.RaftStore != nil {
+			room.RaftStore.Close() //If there is a session currently, close it
+		}
+		room.RaftStore = room.New()
+		err := room.RaftStore.InitRoomRaft()
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
 
 		//calling the method to tell others you have joined
-		//backend.NewPlayer(RoomState)
+		NewPlayerChannel <- RoomState
 
 		r.JSON(http.StatusOK, "")
 	})

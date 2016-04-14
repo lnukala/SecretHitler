@@ -6,6 +6,7 @@ rm -rf raftdb
 go install zmq
 go install dnsimple
 go install constants
+go install room
 go install backend
 go install userinfo
 go install apiserver
