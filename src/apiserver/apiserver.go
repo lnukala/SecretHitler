@@ -245,7 +245,7 @@ func GetServer() *APIServer {
 			for i := 0; i < len(peers); i++ {
 				number := rand.Intn(constants.MaxPlayers)
 				for roles.Contains(number) == true {
-					number = rand.Intn(constants.MaxPlayers) //pick a unique number
+					gumber = rand.Intn(constants.MaxPlayers) //pick a unique number
 				}
 				roles.Add(number)
 				role := ""
@@ -272,7 +272,6 @@ func GetServer() *APIServer {
 		if err != nil {
 			r.Error(405)
 		}
-		room.RaftStore.SetRole("test", "1")
 		r.JSON(http.StatusOK, map[string]interface{}{"role": role})
 	})
 
