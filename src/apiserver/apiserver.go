@@ -161,6 +161,7 @@ func GetServer() *APIServer {
 			} else {
 				roomID = 0 //avoid overflow
 			}
+			raft.RaftStore.Delete(strconv.Itoa(roomID))
 			RoomState = raft.RaftStore.GetRoom(roomID)
 		}
 		RoomState.CurrPlayers = RoomState.CurrPlayers + "," + zmq.GetPublicIP()
