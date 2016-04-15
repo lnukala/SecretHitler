@@ -245,7 +245,7 @@ func GetServer() *APIServer {
 			for i := 0; i < len(peers); i++ {
 				number := rand.Intn(constants.MaxPlayers)
 				for roles.Contains(number) == true {
-					gumber = rand.Intn(constants.MaxPlayers) //pick a unique number
+					number = rand.Intn(constants.MaxPlayers) //pick a unique number
 				}
 				roles.Add(number)
 				role := ""
@@ -254,7 +254,7 @@ func GetServer() *APIServer {
 					role = "Liberal"
 				case number >= 5 && number <= 6:
 					role = "Fascist"
-				case number == 7:
+			        case number == 7:
 					role = "Hitler"
 				default:
 					println("Control shouldn't reach here. Error")
