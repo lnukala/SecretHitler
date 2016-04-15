@@ -164,7 +164,11 @@ func GetServer() *APIServer {
 			raft.RaftStore.Delete(strconv.Itoa(roomID))
 			RoomState = raft.RaftStore.GetRoom(roomID)
 		}
-		RoomState.CurrPlayers = RoomState.CurrPlayers + "," + zmq.GetPublicIP()
+		if RoomState.CurrPlayers != "" {
+			RoomState.CurrPlayers = RoomState.CurrPlayers + "," + zmq.GetPublicIP()
+		} else {
+			RoomState.CurrPlayers = zmq.GetPublicIP()
+		}
 		println("[APISERVER] Current players in the room are " + RoomState.CurrPlayers)
 		jsonObj, _ := json.Marshal(RoomState)
 		roomstring := string(jsonObj)

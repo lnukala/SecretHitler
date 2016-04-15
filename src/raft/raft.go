@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"zmq"
 
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/raft-boltdb"
@@ -309,7 +308,6 @@ func (s *Store) GetRoom(roomID int) Room {
 		s.Set(roomString, response)
 		return room
 	}
-
 	print("Returning the old room!!!")
 	byteResponse := []byte(response)
 	json.Unmarshal(byteResponse, &roomResponse)
@@ -319,30 +317,12 @@ func (s *Store) GetRoom(roomID int) Room {
 /*StoreUser :Pass in a CSV object, change to struct, then store it!
 * Returns true if successful*/
 func (s *Store) StoreUser(passedObj string) {
-	var room Room
 	shortObj := passedObj[1 : len(passedObj)-1]
 	tokenArray := strings.Split(shortObj, ",")
 	user := User{tokenArray[0], tokenArray[1], tokenArray[2], tokenArray[3], tokenArray[4]}
 	jsonObj, _ := json.Marshal(user)
 	stringObj := string(jsonObj)
 	s.Set(tokenArray[0], stringObj)
-
-	//----Also need to update the room list!
-	//----TODO this is a hack, we need to pass the room code
-	room = s.GetRoom(0)
-	if strings.Compare(room.CurrPlayers, "") == 0 {
-		room.CurrPlayers = zmq.GetPublicIP()
-	} else {
-		if !strings.Contains(room.CurrPlayers, tokenArray[0]) {
-			room.CurrPlayers += "," + tokenArray[0]
-		}
-	}
-	print("\n\nUSERLIST ---------- " + room.CurrPlayers + "\n")
-	jsonObj, _ = json.Marshal(room)
-	stringObj = string(jsonObj)
-	//----TODO This is the same hack, fix it!
-	s.Set("0", stringObj)
-
 }
 
 // GetUser Get user from raft store
