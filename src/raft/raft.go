@@ -1,10 +1,12 @@
 package raft
 
 import (
+	"bytes"
 	"dnsimple"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
@@ -13,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"zmq"
 
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/raft-boltdb"
@@ -331,4 +334,32 @@ func (s *Store) GetUser(userID string) []byte {
 	response, _ := s.Get(userID)
 	byteResponse = []byte(response)
 	return byteResponse
+}
+
+//ReadPeersJSON :read the peers in the game
+func ReadPeersJSON() ([]string, error) {
+	b, err := ioutil.ReadFile("roomdb/peers.json")
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	if len(b) == 0 {
+		return nil, nil
+	}
+
+	var peers []string
+	dec := json.NewDecoder(bytes.NewReader(b))
+	if err := dec.Decode(&peers); err != nil {
+		return nil, err
+	}
+
+	return peers, nil
+}
+
+//IsLeader :read the peers in the game
+func (s *Store) IsLeader() bool {
+	if s.raft.Leader() == zmq.GetPublicIP() {
+		return true
+	}
+	return false
 }
