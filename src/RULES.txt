@@ -1,12 +1,6 @@
-SECRET HITLER RULES IN A NUTSHELL:
-Game sizes(recommended):
-(THIS DOES NOT INCLUDE HITLER ADD 1H to EACH)
-5(3L, 1F)
-6(4L, ^) 
-7(^, 2F)
-8(5L, ^)
-9(^, 3F)
-10(6L, ^)(BEST)
+gECRET HITLER RULES IN A NUTSHELL:
+Game size:
+8(5 Liberal, 2 Fascist, 1 Hitler)
 
 11 Fascist cards
 6 Liberal cards
@@ -15,51 +9,45 @@ Affiliation(Liberal, Fascist) and Secret roles(Liberal,
 fascist, hitler) assigned at random
 
 Objectives to win
+
 Liberal
 5 Liberal policies played
-Kill hitler(fascist power)
+Kill hitler through fasist kill power
+
 Fascist
-hitler chancelor AFTER 3 fascist policies
+hitler elected chancelor AFTER 3 fascist policies played
 6 fascist policies
 
 Gameplay loop
 { 
-President shifts to the left player(random at onset)
-president select a chancelor to vote for
-Vote for pair(Ja!, Nein!) draws mean a concensus of Nein!
 
-If concensus reached{
-	president draws 3 policies from deck(secret)
-	chancelor is given 2(secret) policies from pres, picks 1, is played
-	fasict power is activated, if able
-	discussion...(can happen at any point really)
-} 
-else {
-	if president chancelor pair rejected x3 in a row {
-        	random policy from top of deck is played(FASICT POWERS DO_NOT_ACTIVATE)
-        }
-}
+	President shifts to the next player alphabetically by name(randomly set at onset)
+	president select a chancelor to vote for
+	Vote for pair(Ja!, Nein!) (draws mean a concensus of Nein!)
+
+	If concensus is Ja!(YES!){
+		president draws 3 policies from deck(secret)
+		chancelor is given 2(secret) policies from pres, picks 1, is played
+		fasict power is activated, if able
+		discussion...(can happen at any point really)
+	} 
+	else (NEIN!){
+		if president chancelor pair rejected x3 in a row {
+        		HUNG PARLAMENT: random policy from top of deck is played(FASICT POWERS DO_NOT_ACTIVATE)
+        	}
+	}
 }
 
 //--------
-Fascist Powers activated(activated when a fasist policy is played by the chancelor, NOT BY RANDOM)
+Fascist Powers: Current President gets to use (activated when a fasist policy is played by the chancelor, NOT BY HUNG PARLEMENT)
 At 1 policy:
-(9-10 players) 
-Investigate a player: current president gets to choose and see that player's affiliation(always liberal or fascist)
-(5-8 players)
 Nothing
 
 At 2 policies:
-(7-10 players)
-Investigate a player
-(5-6 plauyers)
-nothing
+Investigate a player, you see their party affiliation(liberal, fascist)
 
 At 3 policies(NOTE, FASCISTS WIN IF HITLER ELECTED CHANCELOR _AFTER_ THIS POINT)
-(7-10 players)
 Rigged election: current president gets to choose the next president. Chancelor selection and voting proceeds as normal after
-(5-6 players)
-policy peek: current president gets to also see the 3 policy cards the next president draws
 
 At 4 policies
 Kill a player: player is removed from gameplay. can still hang around and win with their team
