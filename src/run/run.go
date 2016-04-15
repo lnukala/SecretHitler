@@ -8,8 +8,6 @@ import (
 	"zmq"
 )
 
-// RaftStore : Global variable
-
 func main() {
 	s := api.GetServer()
 	s.SetUID(zmq.GetPublicIP())
@@ -28,7 +26,6 @@ func main() {
 	if isSuper { //----We only set up sn stuff if we're a sn
 		raft.RaftStore = raft.New()
 		raft.RaftStore.InitRaft()
-		api.RaftStore = raft.RaftStore
 		backend.Publish("supernode", "raftPromote", zmq.GetPublicIP())
 		//room := raft.GetRoom(0) //TODO This is the magical room id, should probably get changed at some point
 	}

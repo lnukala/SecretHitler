@@ -1,18 +1,18 @@
-package raft
+package room
 
 import (
-	"dnsimple"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
+	"zmq"
 
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/raft-boltdb"
@@ -76,25 +76,18 @@ func New() *Store {
 	}
 }
 
-//InitRaft : initialize raft
-func (s *Store) InitRaft() error {
+//InitRoomRaft : initialize raft
+func (s *Store) InitRoomRaft() error {
 	// Setup Raft configuration.
 	config := raft.DefaultConfig()
 
-	// Check for any existing peers.
-	client := dnsimple.GetClient()
-	dnsimple.PrintDomains(client)
-	records := dnsimple.GetRecords(client)
-
 	// Allow the node to entry single-mode, potentially electing itself, if
 	// explicitly enabled and there is only 1 node in the cluster already.
-	if len(records) <= 2 {
-		config.EnableSingleNode = true
-		config.DisableBootstrapAfterElect = false
-	}
+	config.EnableSingleNode = true
+	config.DisableBootstrapAfterElect = false
 
 	//Define the port and ip that raft will bind on
-	raftbind := ":5557"
+	raftbind := ":5558"
 
 	// Setup Raft communication.
 	addr, err := net.ResolveTCPAddr("tcp", raftbind)
@@ -107,16 +100,16 @@ func (s *Store) InitRaft() error {
 	}
 
 	// Create peer storage.
-	peerStore := raft.NewJSONPeers("raftdb", transport)
+	peerStore := raft.NewJSONPeers("roomdb", transport)
 
 	// Create the snapshot store. This allows the Raft to truncate the log.
-	snapshots, err := raft.NewFileSnapshotStore("raftdb", retainSnapshotCount, os.Stderr)
+	snapshots, err := raft.NewFileSnapshotStore("roomdb", retainSnapshotCount, os.Stderr)
 	if err != nil {
 		return fmt.Errorf("file snapshot store: %s", err)
 	}
 
 	// Create the log store and stable store.
-	logStore, err := raftboltdb.NewBoltStore(filepath.Join("raftdb", "raft.db"))
+	logStore, err := raftboltdb.NewBoltStore(filepath.Join("roomdb", "raft.db"))
 	if err != nil {
 		return fmt.Errorf("new bolt store: %s", err)
 	}
@@ -294,41 +287,36 @@ func (f *fsmSnapshot) Persist(sink raft.SnapshotSink) error {
 
 func (f *fsmSnapshot) Release() {}
 
-/*GetRoom : Get our room object if able, or create it if it doesn't exist*/
-func (s *Store) GetRoom(roomID int) Room {
-	var roomResponse Room
-	roomString := strconv.Itoa(roomID)
-	response, _ := s.Get(roomString)
+//Close : shoutdown the raft session running for the game
+func (s *Store) Close() {
+	os.RemoveAll("roomdb") //delete the directory being used to store the data
+	s.raft.Shutdown()      //shut down the current raft session for the room
+}
 
-	if len(response) == 0 {
-		print("Creating new room!!!!")
-		room := Room{roomID, "", "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
-		jsonObj, _ := json.Marshal(room)
-		response = string(jsonObj)
-		s.Set(roomString, response)
-		return room
+//ReadPeersJSON :read the peers in the game
+func ReadPeersJSON() ([]string, error) {
+	b, err := ioutil.ReadFile("roomdb/peers.json")
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
 	}
-	print("Returning the old room!!!")
-	byteResponse := []byte(response)
-	json.Unmarshal(byteResponse, &roomResponse)
-	return roomResponse
+
+	if len(b) == 0 {
+		return nil, nil
+	}
+
+	var peers []string
+	dec := json.NewDecoder(bytes.NewReader(b))
+	if err := dec.Decode(&peers); err != nil {
+		return nil, err
+	}
+
+	return peers, nil
 }
 
-/*StoreUser :Pass in a CSV object, change to struct, then store it!
-* Returns true if successful*/
-func (s *Store) StoreUser(passedObj string) {
-	shortObj := passedObj[1 : len(passedObj)-1]
-	tokenArray := strings.Split(shortObj, ",")
-	user := User{tokenArray[0], tokenArray[1], tokenArray[2], tokenArray[3], tokenArray[4]}
-	jsonObj, _ := json.Marshal(user)
-	stringObj := string(jsonObj)
-	s.Set(tokenArray[0], stringObj)
-}
-
-// GetUser Get user from raft store
-func (s *Store) GetUser(userID string) []byte {
-	var byteResponse []byte
-	response, _ := s.Get(userID)
-	byteResponse = []byte(response)
-	return byteResponse
+//IsLeader :read the peers in the game
+func (s *Store) IsLeader() bool {
+	if s.raft.Leader() == zmq.GetPublicIP() {
+		return true
+	}
+	return false
 }

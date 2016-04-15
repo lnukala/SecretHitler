@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"raft"
+	"room"
 	"strconv"
 	"strings"
 	"time"
@@ -171,10 +172,11 @@ func Handle() {
 			api.AddUser(params)
 			zmq.ResponseChannel <- success
 		case "newPlayer":
-			Subscribe(params, RoomState.GlobalComTopicName)
-			RoomState.CurrPlayers = RoomState.CurrPlayers + ", " + params
-			request := urllib.Post("http://127.0.0.1:8000/add_base_room/")
-			var roomjson = map[string]interface{}{"room_id": RoomState.RoomId,
+			Subscribe(params, RoomState.GlobalComTopicName) //subscribe to the new node
+			room.RaftStore.Join(params + ":5558")           //If leader, add the new player to raft
+			RoomState.CurrPlayers = RoomState.CurrPlayers + "," + params
+			request := urllib.Put("http://127.0.0.1:8000/update_room/")
+			var roomjson = map[string]interface{}{"room_id": RoomState.RoomID,
 				"curr_players":                   RoomState.CurrPlayers,
 				"global_comm_topic_name":         RoomState.GlobalComTopicName,
 				"global_notification_topic_name": RoomState.GlobalNotificationTopicName,
@@ -184,13 +186,13 @@ func Handle() {
 				"current_fascist_in_deck":        RoomState.CurrentFascistInDeck,
 				"current_liberal_in_deck":        RoomState.CurrentLiberalInDeck,
 				"current_total_in_deck":          RoomState.CurrentTotalInDeck,
-				"chancellor_id":                  RoomState.ChancellorId,
-				"president_id":                   RoomState.PresidentId,
+				"chancellor_id":                  RoomState.ChancellorID,
+				"president_id":                   RoomState.PresidentID,
 				"president_channel":              RoomState.PresidentChannel,
 				"chancellor_channel":             RoomState.ChancelorChannel,
-				"hitler_id":                      RoomState.HitlerId}
+				"hitler_id":                      RoomState.HitlerID}
 			request, err := request.JsonBody(roomjson)
-			if err == nil {
+			if err != nil {
 				println(err.Error())
 			} else {
 				request.String()
@@ -253,14 +255,17 @@ func Bootstrap(server *apiserver.APIServer) bool {
 	return isSuper
 }
 
-//HandleNewPlayer  : HANDLE NEW players
+//HandleNewPlayer : Handle new players
 func HandleNewPlayer() {
 	for {
 		RoomState = <-apiserver.NewPlayerChannel
 		players := strings.Split(RoomState.CurrPlayers, ",")
 		for i := 0; i < len(players); i++ {
 			Subscribe(players[i], RoomState.GlobalComTopicName)
-			Request(players[i], "newPlayer"+constants.Delimiter+zmq.GetPublicIP())
+			if players[i] != zmq.GetPublicIP() {
+				println("[Backend] Sending new player request to " + players[i])
+				Request(players[i], "newPlayer"+constants.Delimiter+zmq.GetPublicIP())
+			}
 		}
 	}
 }

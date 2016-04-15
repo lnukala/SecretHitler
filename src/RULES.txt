@@ -1,11 +1,11 @@
-gECRET HITLER RULES IN A NUTSHELL:
+SECRET HITLER RULES IN A NUTSHELL:
 Game size:
 8(5 Liberal, 2 Fascist, 1 Hitler)
 
 11 Fascist cards
 6 Liberal cards
 
-Affiliation(Liberal, Fascist) and Secret roles(Liberal, 
+Affiliation(Liberal, Fascist) and Secret roles(Liberal,
 fascist, hitler) assigned at random
 
 Objectives to win
@@ -19,7 +19,7 @@ hitler elected chancelor AFTER 3 fascist policies played
 6 fascist policies
 
 Gameplay loop
-{ 
+{
 
 	President shifts to the next player alphabetically by name(randomly set at onset)
 	president select a chancelor to vote for

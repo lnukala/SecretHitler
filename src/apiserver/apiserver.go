@@ -1,13 +1,21 @@
 package apiserver
 
 import (
+	"constants"
 	"encoding/json"
 	"io/ioutil"
+	"math"
+	"math/rand"
 	"net/http"
 	"net/url"
 	raft "raft"
+	"room"
+	"strconv"
+	"strings"
+	"zmq"
 
 	"github.com/GiterLab/urllib"
+	"github.com/deckarep/golang-set"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
 )
@@ -25,11 +33,11 @@ type APIServer struct {
 
 var singleServer *APIServer
 
-//RaftStore : Global variable for store
-var RaftStore *raft.Store
-
 //NewPlayerChannel :new player info is passed here
 var NewPlayerChannel = make(chan raft.Room)
+
+//RoomID : The ID of the room being returned
+var roomID int
 
 // RunServer : start the server
 func (s *APIServer) RunServer() {
@@ -106,12 +114,17 @@ func GetServer() *APIServer {
 		}
 
 		//Creating the user json
-		var userjson = map[string]interface{}{"user_id": singleServer.uid, "name": username, "user_type": "liberal", "node_type": nodeType, "secret_role": "hitler"}
-		var registerationjson = singleServer.uid + "," + username + "," + "liberal" + "," + nodeType + "," + "hitler"
+		var userjson = map[string]interface{}{"user_id": singleServer.uid,
+			"name": username, "user_type": "", "node_type": nodeType,
+			"secret_role": ""}
+		var registerationjson = singleServer.uid + "," +
+			username + "," + "liberal" + "," + nodeType + "," + "hitler"
 		//Call the DNS to send the requet to a super node
 		registerationrequest := urllib.Post("http://secrethitler.lnukala.me:3000/registeruser/")
 		registerationrequest, err := registerationrequest.JsonBody(registerationjson)
 		if err != nil {
+			println(err.Error())
+			r.Error(500)
 		}
 		registerationrequest.String()
 
@@ -119,6 +132,7 @@ func GetServer() *APIServer {
 		print("Calling the get room method!!")
 		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
 		roomrequest.String()
+
 		//Getting the room json and calling the update
 		r.JSON(http.StatusOK, userjson)
 	})
@@ -135,34 +149,35 @@ func GetServer() *APIServer {
 		}
 		print("User id queries - " + userid)
 		//Get the user details from gavins method and return to front end
-		var userjson = map[string]interface{}{"user_id": userid, "name": "test_user", "user_type": "liberal", "node_type": "test_role", "secret_role": "hitler"}
+		var userjson = map[string]interface{}{"user_id": userid, "name": "test_user",
+			"user_type": "liberal", "node_type": "test_role", "secret_role": "hitler"}
 		r.JSON(http.StatusOK, userjson)
 	})
 
 	// Register User
 	singleServer.m.Post("/getroom", func(req *http.Request, r render.Render) {
-		print("Getting the room details!!!!!!!!!!")
-		RoomState := raft.RaftStore.GetRoom(0)
-		print(RoomState.CurrPlayers)
-		// var roomjson = map[string]interface{}{
-		// 	"room_id":                        RoomState.RoomId,
-		// 	"curr_players":                   RoomState.CurrPlayers,
-		// 	"global_comm_topic_name":         "coms",
-		// 	"global_notification_topic_name": "notifications",
-		// 	"no_of_policies_passed":          0,
-		// 	"fascist_policies_passed":        0,
-		// 	"liberal_policies_passed":        0,
-		// 	"current_fascist_in_deck":        11,
-		// 	"current_liberal_in_deck":        6,
-		// 	"current_total_in_deck":          17,
-		// 	"chancellor_id":                  -1,
-		// 	"president_id":                   -1,
-		// 	"president_channel":              "pres",
-		// 	"chancellor_channel":             "chan",
-		// 	"hitler_id":                      -1}
-
+		RoomState := raft.RaftStore.GetRoom(roomID)
+		players := strings.Split(RoomState.CurrPlayers, ",")
+		if len(players) >= constants.MaxPlayers {
+			if roomID < math.MaxInt32 {
+				roomID = roomID + 1
+			} else {
+				roomID = 0 //avoid overflow
+			}
+			raft.RaftStore.Delete(strconv.Itoa(roomID))
+			RoomState = raft.RaftStore.GetRoom(roomID)
+		}
+		if RoomState.CurrPlayers != "" {
+			RoomState.CurrPlayers = RoomState.CurrPlayers + "," + zmq.GetPublicIP()
+		} else {
+			RoomState.CurrPlayers = zmq.GetPublicIP()
+		}
+		println("[APISERVER] Current players in the room are " + RoomState.CurrPlayers)
+		jsonObj, _ := json.Marshal(RoomState)
+		roomstring := string(jsonObj)
+		raft.RaftStore.Set(strconv.Itoa(roomID), roomstring)
 		var roomjson = map[string]interface{}{
-			"room_id":                        RoomState.RoomId,
+			"room_id":                        RoomState.RoomID,
 			"curr_players":                   RoomState.CurrPlayers,
 			"global_comm_topic_name":         RoomState.GlobalComTopicName,
 			"global_notification_topic_name": RoomState.GlobalNotificationTopicName,
@@ -172,25 +187,35 @@ func GetServer() *APIServer {
 			"current_fascist_in_deck":        RoomState.CurrentFascistInDeck,
 			"current_liberal_in_deck":        RoomState.CurrentLiberalInDeck,
 			"current_total_in_deck":          RoomState.CurrentTotalInDeck,
-			"chancellor_id":                  RoomState.ChancellorId,
-			"president_id":                   RoomState.PresidentId,
+			"chancellor_id":                  RoomState.ChancellorID,
+			"president_id":                   RoomState.PresidentID,
 			"president_channel":              RoomState.PresidentChannel,
 			"chancellor_channel":             RoomState.ChancelorChannel,
-			"hitler_id":                      RoomState.HitlerId}
+			"hitler_id":                      RoomState.HitlerID}
 
 		//Getting the room json and calling the update
 		print("Calling the room info update method!!")
 		roomrequest := urllib.Post("http://127.0.0.1:8000/add_base_room/")
 		roomrequest, err2 := roomrequest.JsonBody(roomjson)
 		if err2 != nil {
+			println(err2.Error())
+			r.Error(500)
 		}
 		roomrequest.String()
 
-		//calling the method to tell others you have joined
-		NewPlayerChannel <- RoomState
+		//Initialize raft for the game that you are about to join
+		if room.RaftStore != nil {
+			room.RaftStore.Close() //If there is a session currently, close it
+		}
+		room.RaftStore = room.New()
+		err := room.RaftStore.InitRoomRaft()
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
 
 		//calling the method to tell others you have joined
-		//backend.NewPlayer(RoomState)
+		NewPlayerChannel <- RoomState
 
 		r.JSON(http.StatusOK, "")
 	})
@@ -208,20 +233,43 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, "")
 	})
 
-	// rooms  list all the rooms
-	singleServer.m.Get("/rooms", func(args martini.Params) string {
-		res, _ := json.Marshal([]int{1, 2, 3, 4})
-		return string(res)
-	})
-
-	// login  return json data including the succes information
-	singleServer.m.Get("/myrole", func(args martini.Params, r render.Render) {
-		r.JSON(http.StatusOK, map[string]interface{}{"role": "chancellor"})
+	//getrole : called by all nodes once 8 players are reached. Only works in leader
+	singleServer.m.Get("/getrole", func(args martini.Params, r render.Render) {
+		if room.RaftStore.IsLeader() == true {
+			peers, err := room.ReadPeersJSON()
+			if err != nil {
+				println(err.Error())
+				r.Error(500)
+			}
+			roles := mapset.NewSet()
+			for i := 0; i < len(peers); i++ {
+				number := rand.Intn(constants.MaxPlayers)
+				for roles.Contains(number) == true {
+					number = rand.Intn(constants.MaxPlayers) //pick a unique number
+				}
+				roles.Add(number)
+				role := ""
+				switch {
+				case number >= 0 && number <= 4:
+					role = "Liberal"
+				case number >= 5 && number <= 6:
+					role = "Fascist"
+				case number == 7:
+					role = "Hitler"
+				default:
+					println("Control shouldn't reach here. Error")
+					r.Error(500)
+				}
+				room.RaftStore.Set(peers[i], role)
+			}
+		}
+		r.JSON(http.StatusOK, "")
 	})
 
 	// check if it's super node and see who it attach to
 	singleServer.m.Get("/issuper", func(args martini.Params, r render.Render) {
-		r.JSON(http.StatusOK, map[string]interface{}{"super": singleServer.super, "attach_to": singleServer.attachedTo})
+		r.JSON(http.StatusOK, map[string]interface{}{"super": singleServer.super,
+			"attach_to": singleServer.attachedTo})
 	})
 
 	// superlist  see the super node list
