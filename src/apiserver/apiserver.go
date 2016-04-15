@@ -233,8 +233,8 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, "")
 	})
 
-	//getrole : called by all nodes once 8 players are reached. Only works in leader
-	singleServer.m.Get("/getrole", func(args martini.Params, r render.Render) {
+	//allocrole : called by leader when 8 players join. Only works in leader
+	singleServer.m.Get("/allocrole", func(args martini.Params, r render.Render) {
 		if room.RaftStore.IsLeader() == true {
 			peers, err := room.ReadPeersJSON()
 			if err != nil {
@@ -264,6 +264,12 @@ func GetServer() *APIServer {
 			}
 		}
 		r.JSON(http.StatusOK, "")
+	})
+
+	// check if it's super node and see who it attach to
+	singleServer.m.Get("/getRole", func(args martini.Params, r render.Render) {
+		role := room.RaftStore.Get(zmq.GetPublicIP())
+		r.JSON(http.StatusOK, map[string]interface{}{"role": role})
 	})
 
 	// check if it's super node and see who it attach to
