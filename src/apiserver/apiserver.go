@@ -247,6 +247,7 @@ func GetServer() *APIServer {
 				for roles.Contains(number) == true {
 					number = rand.Intn(constants.MaxPlayers) //pick a unique number
 				}
+				roles.Add(number)
 				role := ""
 				switch {
 				case number >= 0 && number <= 4:
