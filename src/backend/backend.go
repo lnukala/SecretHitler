@@ -174,7 +174,7 @@ func Handle() {
 		case "newPlayer":
 			Subscribe(params, RoomState.GlobalComTopicName) //subscribe to the new node
 			room.RaftStore.Join(params + ":5558")           //If leader, add the new player to raft
-			RoomState.CurrPlayers = RoomState.CurrPlayers + ", " + params
+			RoomState.CurrPlayers = RoomState.CurrPlayers + "," + params
 			request := urllib.Put("http://127.0.0.1:8000/update_room/")
 			var roomjson = map[string]interface{}{"room_id": RoomState.RoomID,
 				"curr_players":                   RoomState.CurrPlayers,
