@@ -320,3 +320,23 @@ func (s *Store) IsLeader() bool {
 	}
 	return false
 }
+
+// GetUser Get user from raft store
+func (s *Store) GetUser(userID string) []byte {
+        var byteResponse []byte
+        response, _ := s.Get(userID)
+        byteResponse = []byte(response)
+        return byteResponse
+}
+
+//SetRole: Give a user the specified role
+func (s *Store) SetRole(peer string, role string) {
+        var user User
+
+        byteUser := s.GetUser(peer)
+        json.Unmarshal(byteUser, &user)
+        user.SecretRole = role
+        byteUser, _ = json.Marshal(user)
+        stringUser := string(byteUser)
+        s.Set(peer, stringUser)
+}
