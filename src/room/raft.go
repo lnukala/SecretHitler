@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+	"zmq"
 
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/raft-boltdb"
@@ -286,14 +287,6 @@ func (f *fsmSnapshot) Persist(sink raft.SnapshotSink) error {
 
 func (f *fsmSnapshot) Release() {}
 
-//IsLeader : check if you are leader
-func (s *Store) IsLeader() bool {
-	if s.raft.State() != raft.Leader {
-		return false
-	}
-	return true
-}
-
 //Close : shoutdown the raft session running for the game
 func (s *Store) Close() {
 	os.RemoveAll("roomdb") //delete the directory being used to store the data
@@ -318,4 +311,12 @@ func ReadPeersJSON() ([]string, error) {
 	}
 
 	return peers, nil
+}
+
+//IsLeader :read the peers in the game
+func (s *Store) IsLeader() bool {
+	if s.raft.Leader() == zmq.GetPublicIP() {
+		return true
+	}
+	return false
 }

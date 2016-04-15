@@ -1,9 +1,11 @@
 package apiserver
 
 import (
+	"constants"
 	"encoding/json"
 	"io/ioutil"
 	"math"
+	"math/rand"
 	"net/http"
 	"net/url"
 	raft "raft"
@@ -13,6 +15,7 @@ import (
 	"zmq"
 
 	"github.com/GiterLab/urllib"
+	"github.com/deckarep/golang-set"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
 )
@@ -112,8 +115,8 @@ func GetServer() *APIServer {
 
 		//Creating the user json
 		var userjson = map[string]interface{}{"user_id": singleServer.uid,
-			"name": username, "user_type": "liberal", "node_type": nodeType,
-			"secret_role": "hitler"}
+			"name": username, "user_type": "", "node_type": nodeType,
+			"secret_role": ""}
 		var registerationjson = singleServer.uid + "," +
 			username + "," + "liberal" + "," + nodeType + "," + "hitler"
 		//Call the DNS to send the requet to a super node
@@ -155,7 +158,7 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/getroom", func(req *http.Request, r render.Render) {
 		RoomState := raft.RaftStore.GetRoom(roomID)
 		players := strings.Split(RoomState.CurrPlayers, ",")
-		if len(players) >= 8 {
+		if len(players) >= constants.MaxPlayers {
 			if roomID < math.MaxInt32 {
 				roomID = roomID + 1
 			} else {
@@ -230,15 +233,36 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, "")
 	})
 
-	// rooms  list all the rooms
-	singleServer.m.Get("/rooms", func(args martini.Params) string {
-		res, _ := json.Marshal([]int{1, 2, 3, 4})
-		return string(res)
-	})
-
-	// login  return json data including the succes information
-	singleServer.m.Get("/myrole", func(args martini.Params, r render.Render) {
-		r.JSON(http.StatusOK, map[string]interface{}{"role": "chancellor"})
+	//getrole : called by all nodes once 8 players are reached. Only works in leader
+	singleServer.m.Get("/getrole", func(args martini.Params, r render.Render) {
+		if room.RaftStore.IsLeader() == true {
+			peers, err := room.ReadPeersJSON()
+			if err != nil {
+				println(err.Error())
+				r.Error(500)
+			}
+			roles := mapset.NewSet()
+			for i := 0; i < len(peers); i++ {
+				number := rand.Intn(constants.MaxPlayers)
+				for roles.Contains(number) == true {
+					number = rand.Intn(constants.MaxPlayers) //pick a unique number
+				}
+				role := ""
+				switch {
+				case number >= 0 && number <= 4:
+					role = "Liberal"
+				case number >= 5 && number <= 6:
+					role = "Fascist"
+				case number == 7:
+					role = "Hitler"
+				default:
+					println("Control shouldn't reach here. Error")
+					r.Error(500)
+				}
+				room.RaftStore.Set(peers[i], role)
+			}
+		}
+		r.JSON(http.StatusOK, "")
 	})
 
 	// check if it's super node and see who it attach to
