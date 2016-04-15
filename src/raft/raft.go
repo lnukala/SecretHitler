@@ -363,3 +363,15 @@ func (s *Store) IsLeader() bool {
 	}
 	return false
 }
+
+//SetRole: Give a user the specified role
+func (s *Store) SetRole(peer string, role string) {
+	var user User
+
+	byteUser := s.GetUser(peer)
+	json.Unmarshal(byteUser, &user)
+	user.SecretRole = role
+	byteUser, _ = json.Marshal(user)
+	stringUser := string(byteUser)
+	s.Set(peer, stringUser)
+}

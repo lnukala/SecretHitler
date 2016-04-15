@@ -260,7 +260,7 @@ func GetServer() *APIServer {
 					println("Control shouldn't reach here. Error")
 					r.Error(500)
 				}
-				room.RaftStore.Set(peers[i], role)
+				room.RaftStore.SetRole(peers[i], role)
 			}
 		}
 		r.JSON(http.StatusOK, "")
@@ -272,6 +272,7 @@ func GetServer() *APIServer {
 		if err != nil {
 			r.Error(405)
 		}
+		room.RaftStore.SetRole("test", "1")
 		r.JSON(http.StatusOK, map[string]interface{}{"role": role})
 	})
 
@@ -299,6 +300,10 @@ func GetServer() *APIServer {
 	singleServer.m.Get("/userlist", func(args martini.Params, r render.Render) {
 		r.JSON(http.StatusOK, map[string]interface{}{"userlist": singleServer.userList})
 	})
+
+	//----Begin gameplay logic
+
+	//----Get the identity of the other fascist in the game
 
 	return singleServer
 }
