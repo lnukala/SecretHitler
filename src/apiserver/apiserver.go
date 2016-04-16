@@ -268,10 +268,7 @@ func GetServer() *APIServer {
 
 	// check if it's super node and see who it attach to
 	singleServer.m.Get("/getRole", func(args martini.Params, r render.Render) {
-		role, err := room.RaftStore.Get(zmq.GetPublicIP())
-		if err != nil {
-			r.Error(405)
-		}
+		role := room.RaftStore.GetRole(zmq.GetPublicIP())
 		r.JSON(http.StatusOK, map[string]interface{}{"role": role})
 	})
 
@@ -303,6 +300,16 @@ func GetServer() *APIServer {
 	//----Begin gameplay logic
 
 	//----Get the identity of the other fascist in the game
+	singleServer.m.Get("/getfascist", func(args martini.Params, r render.Render) {
+		fascist := room.RaftStore.GetFascist()
+		r.JSON(http.StatusOK, map[string]interface{}{"fascist": fascist})
+	})
+
+	//----Get the identity of Hitler
+        singleServer.m.Get("/gethitler", func(args martini.Params, r render.Render) {
+                hitler := room.RaftStore.GetHitler()
+                r.JSON(http.StatusOK, map[string]interface{}{"hitler": hitler})
+        })
 
 	return singleServer
 }

@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 	"zmq"
@@ -340,3 +341,46 @@ func (s *Store) SetRole(peer string, role string) {
         stringUser := string(byteUser)
         s.Set(peer, stringUser)
 }
+
+func(s * Store) GetRole(name string) string {
+	var user User
+
+	byteUser := s.GetUser(name)
+	json.Unmarshal(byteUser, &user)
+	return user.SecretRole
+}
+
+func(s * Store) GetFascist() string {
+
+	var user User
+
+	peerList, _ := ReadPeersJSON()
+	for _, peer := range peerList {
+		byteUser := s.GetUser(peer)
+		json.Unmarshal(byteUser, &user)
+		if(strings.Compare(user.SecretRole, "Fascist") == 0 &&
+			strings.Compare(user.UserID,zmq.GetPublicIP()) != 0) {
+			return user.UserID
+		}
+	}
+	//----SOMETHING IS WRONG
+	return ""
+}
+
+func(s * Store) GetHitler() string {
+
+        var user User
+
+        peerList, _ := ReadPeersJSON()
+        for _, peer := range peerList {
+                byteUser := s.GetUser(peer)
+                json.Unmarshal(byteUser, &user)
+                if(strings.Compare(user.SecretRole, "Hitler") == 0 &&
+                        strings.Compare(user.UserID,zmq.GetPublicIP()) != 0) {
+                        return user.UserID
+                }
+        }
+        //----SOMETHING IS WRONG
+        return ""
+}
+
