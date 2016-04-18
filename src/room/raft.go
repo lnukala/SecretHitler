@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"math/rand"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -55,8 +56,9 @@ type Room struct {
 	PresidentID                 string
 	PresidentChannel            string
 	ChancelorChannel            string
-	HitlerID                    int
+	HitlerID                    string
 	HungCount                   int
+	PresidentChoice		    string
 }
 
 //User : structure respresenting the user information stored
@@ -443,13 +445,27 @@ func(s * Store) SwitchPres(roomId string) {
 	s.SetRoom(roomId, room)
 }
 
+//----Get the President's UID
+func(s * Store) GetPresident(roomId string) string{
+	room := s.GetRoom(roomId)
+
+	return room.PresidentID
+}
+
 //----Set a chancelor post-election
-func(s * Store) SetChancelor(roomId string, chanId string) {
+func(s * Store) SetChancellor(roomId string, chanId string) {
 	room := s.GetRoom(roomId)
 
 	room.ChancellorID = chanId
 
 	s.SetRoom(roomId, room)
+}
+
+//----Get the chancellor's UID
+func(s *Store) GetChancellor(roomId string) string{
+	room := s.GetRoom(roomId)
+
+	return room.ChancellorID
 }
 
 //President: Draw 3 cards from the deck
@@ -491,13 +507,13 @@ func(s *Store) PassTwo(roomId string, choice string) {
 
 	room := s.GetRoom(roomId)
 
-	room.PresidentID = choice
+	room.PresidentChoice = choice
 
 	s.SetRoom(roomId, room)
 }
 
 //----Update the hung parlament counter. Return the count
-func(s * Store) HangParlament(roomId string) int{
+func(s * Store) HangParlament(roomId string) string{
 	room := s.GetRoom(roomId)
 	room.HungCount++
 
@@ -508,16 +524,14 @@ func(s * Store) HangParlament(roomId string) int{
 	s.SetRoom(roomId, room)
 
 	if(room.HungCount == 0) {
-		return 3
+		return "3"
 	} else {
-		return room.HungCount
+		return strconv.Itoa(room.HungCount)
 	}
 }
 
 //-----After hung parlament x3: play a random card off the deck
-func(s * Store) PlayRandom(roomId string) string{
-
-	var out string
+func(s * Store) PlayRandom(roomId string) {
 
 	room := s.GetRoom(roomId)
 
@@ -529,20 +543,19 @@ func(s * Store) PlayRandom(roomId string) string{
 
         roll := rand.Intn(room.CurrentTotalInDeck)
 
+	//----Rolled a liberal
         if(roll < room.CurrentLiberalInDeck) {
                 room.CurrentLiberalInDeck--
                 room.CurrentTotalInDeck--
 		room.LiberalPoliciesPassed++
-		out = "Liberal"
         } else {
+	//----Otherwise rolled a fascist
                 room.CurrentFascistInDeck--
                 room.CurrentTotalInDeck--
 		room.FascistPoliciesPassed++
-		out = "Fascist"
 	}
 
 	s.SetRoom(roomId, room)
-	return out
 }
 
 //----Chancelor: Pass down the selected card
@@ -558,16 +571,45 @@ func(s * Store) PlaySelected(roomId string, card string) {
 	s.SetRoom(roomId, room)
 }
 
-//----Set your vote for the president chancelor pair
-func(s * Store) Vote(userId string, vote int) {
+//----Set your vote for the president chancelor pair(0 is YA, 1 is NEIN)
+func(s * Store) Vote(userId string, vote string) {
 	user := s.GetUser(userId)
 
-	user.Vote = vote
+	intVote, _ := strconv.Atoi(vote)
+
+	user.Vote = intVote
 
 	s.SetUser(userId, user)
 }
 
-//----Count the number of dead users. Needed to keep track of voting count
+//----Returns the results: 1 is NEIN, 0 is YA
+func(s * Store) VoteResults() string {
+	var count int
+
+	userList, _ := ReadPeersJSON()
+	count = 0
+	deadCount := s.DeadCount()
+
+	for _, userString := range userList {
+		user := s.GetUser(userString)
+		count += user.Vote
+	}
+	if(deadCount == 2) {
+		if(count >= 3) {
+			return "1"
+		} else {
+			return "0"
+		}
+	} else {
+		if(count >= 4) {
+			return "1"
+		} else {
+			return "0"
+		}
+	}
+}
+
+//----Count the number of dead users, to calculate voting concensus for no, and how many votes to wait for.
 func(s *Store) DeadCount() int{
 
 	count := 0
@@ -608,4 +650,43 @@ func(s * Store) KillUser(userId string) {
 	user.IsDead = true
 
 	s.SetUser(userId, user)
+}
+
+//----Check for if the game is over in normal circumstances: 0 is not over, 1 is Liberal, 2 is fascist
+func(s *Store) IsGameOver(roomId string) string{
+	room:= s.GetRoom(roomId)
+
+	//----Liberal win #1: 5 liberal policies
+	if(room.LiberalPoliciesPassed == 5) {
+		return "1"
+	}
+	//----Fascist win #1: 6 fascist policies
+	if(room.FascistPoliciesPassed == 6) {
+		return "2"
+	}
+	return "0"
+}
+
+//----Hitler Special Case wins!
+
+//----To be called after a kill resolves: check to see if the liberals won
+func(s *Store) IsHitlerDead(userId string) string{
+	user := s.GetUser(userId)
+
+	if(user.IsDead && strings.Compare(user.SecretRole, "Hitler") == 0) {
+		return "1"
+	}
+	return "0"
+}
+
+//----To be called after an election: check if hitler is chancellor after 3+ fascist policies passed
+func(s *Store) IsHitlerChancellor(roomId string) string{
+
+	room := s.GetRoom(roomId)
+	user := s.GetUser(room.ChancellorID)
+
+	if(room.FascistPoliciesPassed >= 3 && strings.Compare(user.SecretRole, "Hitler") == 0) {
+		return "2"
+	}
+	return "0"
 }
