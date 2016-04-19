@@ -100,7 +100,7 @@ func (s *Store) InitRaft() error {
 	raftbind := ":5557"
 
 	// Setup Raft communication.
-	addr, err := net.ResolveTCPAddr("tcp", raftbind)
+	addr, err := net.ResolveTCPAddr("tcp", zmq.GetPublicIP()+raftbind)
 	if err != nil {
 		return err
 	}
