@@ -304,14 +304,12 @@ func (s *Store) GetRoom(roomID int) Room {
 	response, _ := s.Get(roomString)
 
 	if len(response) == 0 {
-		print("Creating new room!!!!")
 		room := Room{roomID, "", "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
 		jsonObj, _ := json.Marshal(room)
 		response = string(jsonObj)
 		s.Set(roomString, response)
 		return room
 	}
-	print("Returning the old room!!!")
 	byteResponse := []byte(response)
 	json.Unmarshal(byteResponse, &roomResponse)
 	return roomResponse

@@ -2,6 +2,7 @@ package room
 
 import (
 	"bytes"
+	"constants"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -207,7 +208,7 @@ func (s *Store) Leave(addr string) error {
 
 type fsm Store
 
-// Apply : applies a Raft log entry to the key-value store.
+//Apply : applies a Raft log entry to the key-value store.
 func (f *fsm) Apply(l *raft.Log) interface{} {
 	var c command
 	if err := json.Unmarshal(l.Data, &c); err != nil {
@@ -268,6 +269,7 @@ type fsmSnapshot struct {
 	store map[string]string
 }
 
+//Persist : persist the data
 func (f *fsmSnapshot) Persist(sink raft.SnapshotSink) error {
 	err := func() error {
 		// Encode data.
@@ -328,7 +330,7 @@ func (s *Store) IsLeader() bool {
 	return false
 }
 
-// GetUser Get user from raft store
+//GetUser :Get user from raft store
 func (s *Store) GetUser(userID string) User {
 	var user User
 
@@ -339,6 +341,7 @@ func (s *Store) GetUser(userID string) User {
 	return user
 }
 
+//SetUser : set user details in room raft
 func (s *Store) SetUser(userID string, user User) {
 
 	byteUser, _ := json.Marshal(user)
@@ -346,7 +349,7 @@ func (s *Store) SetUser(userID string, user User) {
 	s.Set(userID, stringUser)
 }
 
-//SetRoom: Convenience method: update room info at back
+//SetRoom : Convenience method: update room info at back
 func (s *Store) SetRoom(RoomID string, room Room) {
 	byteRoom, _ := json.Marshal(room)
 	stringRoom := string(byteRoom)
@@ -354,6 +357,7 @@ func (s *Store) SetRoom(RoomID string, room Room) {
 	s.Set(RoomID, stringRoom)
 }
 
+//GetRoom : get room details
 func (s *Store) GetRoom(RoomID string) Room {
 	var room Room
 
@@ -365,7 +369,7 @@ func (s *Store) GetRoom(RoomID string) Room {
 	return room
 }
 
-//SetRole: Give a user the specified role
+//SetRole : Give a user the specified role
 func (s *Store) SetRole(peer string, role string) {
 
 	user := s.GetUser(peer)
@@ -373,14 +377,14 @@ func (s *Store) SetRole(peer string, role string) {
 	s.SetUser(peer, user)
 }
 
-//GetRole: Return your role in the game
+//GetRole : Return your role in the game
 func (s *Store) GetRole(name string) string {
 
 	user := s.GetUser(name)
 	return user.SecretRole
 }
 
-//GetFascist: Return the identity of your fascist ally
+//GetFascist : Return the identity of your fascist ally
 func (s *Store) GetFascist() string {
 
 	peerList, _ := ReadPeersJSON()
@@ -395,7 +399,7 @@ func (s *Store) GetFascist() string {
 	return ""
 }
 
-//GetHitler: Return the identity of hitler
+//GetHitler : Return the identity of hitler
 func (s *Store) GetHitler() string {
 
 	peerList, _ := ReadPeersJSON()
@@ -409,7 +413,7 @@ func (s *Store) GetHitler() string {
 	return ""
 }
 
-//----President switches at begining of every round
+//SwitchPres ----President switches at begining of every round
 func (s *Store) SwitchPres(RoomID string) {
 
 	room := s.GetRoom(RoomID)
@@ -445,30 +449,30 @@ func (s *Store) SwitchPres(RoomID string) {
 	s.SetRoom(RoomID, room)
 }
 
-//----Get the President's UID
+//GetPresident ----Get the President's UID
 func (s *Store) GetPresident(RoomID string) string {
 	room := s.GetRoom(RoomID)
 
 	return room.PresidentID
 }
 
-//----Set a chancelor post-election
-func (s *Store) SetChancellor(RoomID string, chanId string) {
+//SetChancellor ----Set a chancelor post-election
+func (s *Store) SetChancellor(RoomID string, chanID string) {
 	room := s.GetRoom(RoomID)
 
-	room.ChancellorID = chanId
+	room.ChancellorID = chanID
 
 	s.SetRoom(RoomID, room)
 }
 
-//----Get the chancellor's UID
+//GetChancellor ----Get the chancellor's UID
 func (s *Store) GetChancellor(RoomID string) string {
 	room := s.GetRoom(RoomID)
 
 	return room.ChancellorID
 }
 
-//President: Draw 3 cards from the deck
+//DrawThree : Draw 3 cards from the deck
 func (s *Store) DrawThree(RoomID string) string {
 
 	var out string
@@ -503,6 +507,7 @@ func (s *Store) DrawThree(RoomID string) string {
 	return out
 }
 
+//PassTwo :
 func (s *Store) PassTwo(RoomID string, choice string) {
 
 	room := s.GetRoom(RoomID)
@@ -512,8 +517,8 @@ func (s *Store) PassTwo(RoomID string, choice string) {
 	s.SetRoom(RoomID, room)
 }
 
-//----Update the hung parlament counter. Return the count
-func (s *Store) HangParlament(RoomID string) string {
+//HangParliament ----Update the hung parliament counter. Return the count
+func (s *Store) HangParliament(RoomID string) string {
 	room := s.GetRoom(RoomID)
 	room.HungCount++
 
@@ -529,7 +534,7 @@ func (s *Store) HangParlament(RoomID string) string {
 	return strconv.Itoa(room.HungCount)
 }
 
-//-----After hung parlament x3: play a random card off the deck
+//PlayRandom -----After hung parliament x3: play a random card off the deck
 func (s *Store) PlayRandom(RoomID string) {
 
 	room := s.GetRoom(RoomID)
@@ -557,7 +562,7 @@ func (s *Store) PlayRandom(RoomID string) {
 	s.SetRoom(RoomID, room)
 }
 
-//----Chancelor: Pass down the selected card
+//PlaySelected ----Chancelor: Pass down the selected card
 func (s *Store) PlaySelected(RoomID string, card string) {
 	room := s.GetRoom(RoomID)
 
@@ -570,7 +575,7 @@ func (s *Store) PlaySelected(RoomID string, card string) {
 	s.SetRoom(RoomID, room)
 }
 
-//----Set your vote for the president chancelor pair(0 is YA, 1 is NEIN)
+//Vote ----Set your vote for the president chancelor pair(0 is YA, 1 is NEIN)
 func (s *Store) Vote(userID string, vote string) {
 	user := s.GetUser(userID)
 
@@ -581,7 +586,7 @@ func (s *Store) Vote(userID string, vote string) {
 	s.SetUser(userID, user)
 }
 
-//----Returns the results: 1 is NEIN, 0 is YA
+//VoteResults ----Returns the results: 1 is NEIN, 0 is YA
 func (s *Store) VoteResults() string {
 	var count int
 
@@ -595,19 +600,18 @@ func (s *Store) VoteResults() string {
 	}
 	if deadCount == 2 {
 		if count >= 3 {
-			return "1"
-		} else {
-			return "0"
+			return constants.Nein
 		}
-	} else {
-		if count >= 4 {
-			return "1"
-		}
-		return "0"
+		return constants.Ya
 	}
+	if count >= 4 {
+		return constants.Nein
+	}
+	return constants.Ya
 }
 
-//----Count the number of dead users, to calculate voting concensus for no, and how many votes to wait for.
+//DeadCount ---Count the number of dead users, to calculate voting
+//concensus for no, and how many votes to wait for.
 func (s *Store) DeadCount() int {
 
 	count := 0
@@ -621,7 +625,8 @@ func (s *Store) DeadCount() int {
 	return count
 }
 
-//----Fascist Power: Get a player's party affiliation(Liberal or Fascist)
+//InvestigateRole ----Fascist Power: Get a player's party
+//affiliation(Liberal or Fascist)
 func (s *Store) InvestigateRole(userID string) string {
 	user := s.GetUser(userID)
 
@@ -631,7 +636,7 @@ func (s *Store) InvestigateRole(userID string) string {
 	return "Fascist"
 }
 
-//----Fascist Power: Set the next presidental choice
+//RigElection ----Fascist Power: Set the next presidental choice
 func (s *Store) RigElection(RoomID string, userID string) {
 	room := s.GetRoom(userID)
 
@@ -640,7 +645,7 @@ func (s *Store) RigElection(RoomID string, userID string) {
 	s.SetRoom(RoomID, room)
 }
 
-//----Fascist Power: Kill a user, they no longer act in game.
+//KillUser ----Fascist Power: Kill a user, they no longer act in game.
 func (s *Store) KillUser(userID string) {
 	user := s.GetUser(userID)
 
@@ -649,41 +654,41 @@ func (s *Store) KillUser(userID string) {
 	s.SetUser(userID, user)
 }
 
-//----Check for if the game is over in normal circumstances: 0 is not over, 1 is Liberal, 2 is fascist
+//IsGameOver ----Check for if the game is over in normal
+//circumstances: 0 is not over, 1 is Liberal, 2 is fascist
 func (s *Store) IsGameOver(RoomID string) string {
 	room := s.GetRoom(RoomID)
 
 	//----Liberal win #1: 5 liberal policies
 	if room.LiberalPoliciesPassed == 5 {
-		return "1"
+		return constants.LiberalsWin
 	}
 	//----Fascist win #1: 6 fascist policies
 	if room.FascistPoliciesPassed == 6 {
-		return "2"
+		return constants.FascistsWin
 	}
-	return "0"
+	return constants.InProgress
 }
 
 //----Hitler Special Case wins!
 
-//----To be called after a kill resolves: check to see if the liberals won
+//IsHitlerDead ----To be called after a kill resolves: check to see if the liberals won
 func (s *Store) IsHitlerDead(userID string) string {
 	user := s.GetUser(userID)
-
 	if user.IsDead && strings.Compare(user.SecretRole, "Hitler") == 0 {
-		return "1"
+		return constants.LiberalsWin
 	}
-	return "0"
+	return constants.InProgress
 }
 
-//----To be called after an election: check if hitler is chancellor after 3+ fascist policies passed
+//IsHitlerChancellor ----To be called after an election: check if hitler
+//is chancellor after 3+ fascist policies passed
 func (s *Store) IsHitlerChancellor(RoomID string) string {
-
 	room := s.GetRoom(RoomID)
 	user := s.GetUser(room.ChancellorID)
 
 	if room.FascistPoliciesPassed >= 3 && strings.Compare(user.SecretRole, "Hitler") == 0 {
-		return "2"
+		return constants.FascistsWin
 	}
-	return "0"
+	return constants.InProgress
 }
