@@ -64,7 +64,7 @@ type Room struct {
 
 //User : structure respresenting the user information stored
 type User struct {
-	userID     string
+	UserID     string
 	Name       string
 	UserType   string
 	NodeType   string
@@ -305,7 +305,7 @@ func (s *Store) Close() {
 //ReadPeersJSON :read the peers in the game
 func ReadPeersJSON() ([]string, error) {
 	b, err := ioutil.ReadFile("roomdb/peers.json")
-	if err != nil  {
+	if err != nil {
 		return nil, err
 	}
 
@@ -385,8 +385,8 @@ func (s *Store) GetFascist() string {
 	for _, peer := range peerList {
 		user := s.GetUser(peer)
 		if strings.Compare(user.SecretRole, "Fascist") == 0 &&
-			strings.Compare(user.userID, zmq.GetPublicIP()) != 0 {
-			return user.userID
+			strings.Compare(user.UserID, zmq.GetPublicIP()) != 0 {
+			return user.UserID
 		}
 	}
 	//----SOMETHING IS WRONG
@@ -400,7 +400,7 @@ func (s *Store) GetHitler() string {
 	for _, peer := range peerList {
 		user := s.GetUser(peer)
 		if strings.Compare(user.SecretRole, "Hitler") == 0 {
-			return user.userID
+			return user.UserID
 		}
 	}
 	//----SOMETHING IS WRONG

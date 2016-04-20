@@ -8,12 +8,13 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	raft "raft"
+	"raft"
 	"room"
 	"strconv"
 	"strings"
-	"zmq"
 	"time"
+	"zmq"
+
 	"github.com/GiterLab/urllib"
 	"github.com/deckarep/golang-set"
 	"github.com/go-martini/martini"
@@ -136,6 +137,7 @@ func GetServer() *APIServer {
 		}
 		roomstate := raft.Room{}
 		json.Unmarshal(bytes, &roomstate)
+
 		//Initialize raft for the game that you are about to join
 		if room.RaftStore != nil {
 			room.RaftStore.Close() //If there is a session currently, close it
@@ -147,6 +149,7 @@ func GetServer() *APIServer {
 			r.Error(500)
 		}
 		time.Sleep(3000 * time.Millisecond)
+
 		//calling the method to tell others you have joined
 		NewPlayerChannel <- roomstate
 
@@ -173,7 +176,10 @@ func GetServer() *APIServer {
 			}
 			room.RaftStore.SetRoom(gameroom.RoomID, gameroom)
 		}
-
+		//Store user data into room raft
+		userdata := room.User{UserID: zmq.GetPublicIP(), NodeType: nodeType,
+			Name: username}
+		room.RaftStore.SetUser(zmq.GetPublicIP(), userdata)
 		//Getting the room json
 		r.JSON(http.StatusOK, userjson)
 	})
@@ -189,10 +195,8 @@ func GetServer() *APIServer {
 			}
 		}
 		print("User id queries - " + userid)
-		//Get the user details from gavins method and return to front end
-		var userjson = map[string]interface{}{"user_id": userid, "name": "test_user",
-			"user_type": "liberal", "node_type": "test_role", "secret_role": "hitler"}
-		r.JSON(http.StatusOK, userjson)
+		userdata := room.RaftStore.GetUser(userid)
+		r.JSON(http.StatusOK, userdata)
 	})
 
 	// Register User
