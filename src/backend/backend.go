@@ -173,9 +173,9 @@ func Handle() {
 			zmq.ResponseChannel <- success
 		case "newPlayer":
 			Subscribe(params, RoomState.GlobalComTopicName) //subscribe to the new node
-	                //if room.RaftStore.IsLeader() == true {
-				room.RaftStore.Join(params + ":5558") //If leader, add the new player to raft
-	                //}
+			//if room.RaftStore.IsLeader() == true {
+			room.RaftStore.Join(params + ":5558") //If leader, add the new player to raft
+			//}
 			RoomState.CurrPlayers = RoomState.CurrPlayers + "," + params
 			request := urllib.Put("http://127.0.0.1:8000/update_room/")
 			var roomjson = map[string]interface{}{"room_id": RoomState.RoomID,
@@ -202,8 +202,18 @@ func Handle() {
 			zmq.ResponseChannel <- success
 		case "raftPromote":
 			//if raft.RaftStore.IsLeader() == true {
-				raft.RaftStore.Join(params + ":5557")
+			raft.RaftStore.Join(params + ":5557")
 			//}
+			zmq.ResponseChannel <- success
+		case "updateRoom":
+			request := urllib.Put("http://127.0.0.1:8000/update_room/")
+			room := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
+			request, err := request.JsonBody(room)
+			if err != nil {
+				println(err.Error())
+			} else {
+				request.String()
+			}
 			zmq.ResponseChannel <- success
 		default:
 			println("No logic added to handle this method. Please check!")
@@ -271,5 +281,20 @@ func HandleNewPlayer() {
 				Request(players[i], "newPlayer"+constants.Delimiter+zmq.GetPublicIP())
 			}
 		}
+	}
+}
+
+//SendRoomUpdate : Send the updated room info to all players in the room
+//MUST BE CALLED ONLY ON THE PRESIDENT!!!!!!
+func SendRoomUpdate() {
+	roomstate := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
+	Publish(roomstate.GlobalComTopicName, "updateRoom", "")
+	request := urllib.Put("http://127.0.0.1:8000/update_room/")
+	room := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
+	request, err := request.JsonBody(room)
+	if err != nil {
+		println(err.Error())
+	} else {
+		request.String()
 	}
 }
