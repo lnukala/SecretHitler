@@ -353,25 +353,20 @@ func (s *Store) SetUser(userID string, user User) {
 func (s *Store) SetRoom(RoomID string, room Room) {
 	byteRoom, _ := json.Marshal(room)
 	stringRoom := string(byteRoom)
-
 	s.Set(RoomID, stringRoom)
 }
 
 //GetRoom : get room details
 func (s *Store) GetRoom(RoomID string) Room {
 	var room Room
-
 	stringRoom, _ := s.Get(RoomID)
-
 	byteRoom := []byte(stringRoom)
 	json.Unmarshal(byteRoom, &room)
-
 	return room
 }
 
 //SetRole : Give a user the specified role
 func (s *Store) SetRole(peer string, role string) {
-
 	user := s.GetUser(peer)
 	user.SecretRole = role
 	s.SetUser(peer, user)
@@ -379,7 +374,6 @@ func (s *Store) SetRole(peer string, role string) {
 
 //GetRole : Return your role in the game
 func (s *Store) GetRole(name string) string {
-
 	user := s.GetUser(name)
 	return user.SecretRole
 }

@@ -173,26 +173,12 @@ func Handle() {
 			zmq.ResponseChannel <- success
 		case "newPlayer":
 			Subscribe(params, RoomState.GlobalComTopicName) //subscribe to the new node
-			//if room.RaftStore.IsLeader() == true {
-			room.RaftStore.Join(params + ":5558") //If leader, add the new player to raft
-			//}
+			room.RaftStore.Join(params + ":5558")           //add new node to the room raft
 			RoomState.CurrPlayers = RoomState.CurrPlayers + "," + params
+			roomjson := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
+			roomjson.CurrPlayers = RoomState.CurrPlayers
+			room.RaftStore.SetRoom(roomjson.RoomID, roomjson)
 			request := urllib.Put("http://127.0.0.1:8000/update_room/")
-			var roomjson = map[string]interface{}{"room_id": RoomState.RoomID,
-				"curr_players":                   RoomState.CurrPlayers,
-				"global_comm_topic_name":         RoomState.GlobalComTopicName,
-				"global_notification_topic_name": RoomState.GlobalNotificationTopicName,
-				"no_of_policies_passed":          RoomState.NoPoliciesPassed,
-				"fascist_policies_passed":        RoomState.FascistPolciesPassed,
-				"liberal_policies_passed":        RoomState.LiberalPoliciesPassed,
-				"current_fascist_in_deck":        RoomState.CurrentFascistInDeck,
-				"current_liberal_in_deck":        RoomState.CurrentLiberalInDeck,
-				"current_total_in_deck":          RoomState.CurrentTotalInDeck,
-				"chancellor_id":                  RoomState.ChancellorID,
-				"president_id":                   RoomState.PresidentID,
-				"president_channel":              RoomState.PresidentChannel,
-				"chancellor_channel":             RoomState.ChancelorChannel,
-				"hitler_id":                      RoomState.HitlerID}
 			request, err := request.JsonBody(roomjson)
 			if err != nil {
 				println(err.Error())
@@ -201,9 +187,7 @@ func Handle() {
 			}
 			zmq.ResponseChannel <- success
 		case "raftPromote":
-			//if raft.RaftStore.IsLeader() == true {
 			raft.RaftStore.Join(params + ":5557")
-			//}
 			zmq.ResponseChannel <- success
 		case "updateRoom":
 			request := urllib.Put("http://127.0.0.1:8000/update_room/")
