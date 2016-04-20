@@ -305,7 +305,7 @@ func (s *Store) Close() {
 //ReadPeersJSON :read the peers in the game
 func ReadPeersJSON() ([]string, error) {
 	b, err := ioutil.ReadFile("roomdb/peers.json")
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil  {
 		return nil, err
 	}
 
