@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"zmq"
-
+	"time"
 	"github.com/GiterLab/urllib"
 	"github.com/deckarep/golang-set"
 	"github.com/go-martini/martini"
@@ -130,14 +130,12 @@ func GetServer() *APIServer {
 
 		//Getting the room json
 		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
-		roomrequest.String()
-		roomstate := raft.Room{}
-		err = json.Unmarshal(roomrequest.DumpRequest(), roomstate)
-		if err != nil {
-			println(err.Error())
-			r.Error(500)
+		bytes, reqerr := roomrequest.Bytes()
+		if reqerr != nil {
+			println(reqerr.Error())
 		}
-
+		roomstate := raft.Room{}
+		json.Unmarshal(bytes, &roomstate)
 		//Initialize raft for the game that you are about to join
 		if room.RaftStore != nil {
 			room.RaftStore.Close() //If there is a session currently, close it
@@ -148,7 +146,7 @@ func GetServer() *APIServer {
 			println(err.Error())
 			r.Error(500)
 		}
-
+		time.Sleep(3000 * time.Millisecond)
 		//calling the method to tell others you have joined
 		NewPlayerChannel <- roomstate
 
@@ -159,6 +157,7 @@ func GetServer() *APIServer {
 			r.Error(500)
 		}
 		if len(peers) == 1 {
+			println("First player in the room. Initializing room in the room raft")
 			gameroom := room.Room{
 				RoomID:                      strconv.Itoa(roomstate.RoomID),
 				CurrPlayers:                 roomstate.CurrPlayers,
@@ -235,7 +234,7 @@ func GetServer() *APIServer {
 			r.Error(500)
 		}
 		roomrequest.String()
-		r.JSON(http.StatusOK, jsonObj)
+		r.JSON(http.StatusOK, RoomState)
 	})
 
 	// Get the room details
