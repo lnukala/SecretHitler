@@ -498,22 +498,22 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
-        //----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
-        singleServer.m.Get("/ispresident", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	//----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
+	singleServer.m.Get("/ispresident", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 
-                result := room.RaftStore.IsPresident(roomId[0])
-                r.JSON(http.StatusOK, map[string]interface{}{"isPresident": result})
-        })
+		result := room.RaftStore.IsPresident(roomId[0])
+		r.JSON(http.StatusOK, map[string]interface{}{"isPresident": result})
+	})
 	//----wait for a particlular string to be sent over the channel, then return
 	singleServer.m.Get("/wait", func(req *http.Request, r render.Render) {
 		r.JSON(http.StatusOK, "")
 	})
 
 	//----set the webrtc id for the handshake
-	singleServer.m.Get("/setwebrtcid", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/setwebrtcid", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		var f interface{}
 		err := json.Unmarshal(body, &f)
