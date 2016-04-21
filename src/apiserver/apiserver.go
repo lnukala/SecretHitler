@@ -314,8 +314,12 @@ func GetServer() *APIServer {
 	})
 
 	// userlist  see the userlist
-	singleServer.m.Get("/userlist", func(args martini.Params, r render.Render) {
-		r.JSON(http.StatusOK, map[string]interface{}{"userlist": singleServer.userList})
+	singleServer.m.Get("/playerlist", func(args martini.Params, r render.Render) {
+		peers, err := room.ReadPeersJSON()
+		if err != nil {
+			r.Error(500)
+		}
+		r.JSON(http.StatusOK, map[string]interface{}{"players": peers})
 	})
 
 	//----Begin gameplay logic
