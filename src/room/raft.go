@@ -135,7 +135,10 @@ func (s *Store) InitRoomRaft() error {
 func (s *Store) Get(key string) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.m[key], nil
+	if val, ok := s.m[key]; ok {
+		return val, nil
+	}
+	return "", nil
 }
 
 // Set sets the value for the given key.
