@@ -8,10 +8,11 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	raft "raft"
+	"raft"
 	"room"
 	"strconv"
 	"strings"
+	"time"
 	"zmq"
 
 	"github.com/GiterLab/urllib"
@@ -115,7 +116,7 @@ func GetServer() *APIServer {
 
 		//Creating the user json
 		var userjson = map[string]interface{}{"user_id": singleServer.uid,
-			"name": username, "user_type": "", "node_type": nodeType,
+			"name": username, "user_type": -1, "node_type": nodeType,
 			"secret_role": ""}
 		var registerationjson = singleServer.uid + "," +
 			username + "," + "liberal" + "," + nodeType + "," + "hitler"
@@ -128,16 +129,62 @@ func GetServer() *APIServer {
 		}
 		registerationrequest.String()
 
-		//Getting the room json and calling the update
-		print("Calling the get room method!!")
+		//Getting the room json
 		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
-		roomrequest.String()
+		bytes, reqerr := roomrequest.Bytes()
+		if reqerr != nil {
+			println(reqerr.Error())
+		}
+		roomstate := raft.Room{}
+		json.Unmarshal(bytes, &roomstate)
 
-		//Getting the room json and calling the update
+		//Initialize raft for the game that you are about to join
+		if room.RaftStore != nil {
+			room.RaftStore.Close() //If there is a session currently, close it
+		}
+		room.RaftStore = room.New()
+		err = room.RaftStore.InitRoomRaft()
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		time.Sleep(3000 * time.Millisecond)
+
+		//calling the method to tell others you have joined
+		NewPlayerChannel <- roomstate
+
+		//check if there are peers in the room raft, if not, store the room state
+		peers, err := room.ReadPeersJSON()
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		if len(peers) == 1 {
+			println("First player in the room. Initializing room in the room raft")
+			gameroom := room.Room{
+				RoomID:                      strconv.Itoa(roomstate.RoomID),
+				CurrPlayers:                 roomstate.CurrPlayers,
+				GlobalComTopicName:          roomstate.GlobalComTopicName,
+				GlobalNotificationTopicName: roomstate.GlobalNotificationTopicName,
+				NoPoliciesPassed:            0,
+				FascistPoliciesPassed:       0,
+				LiberalPoliciesPassed:       0,
+				CurrentFascistInDeck:        11,
+				CurrentLiberalInDeck:        6,
+				CurrentTotalInDeck:          17,
+				HungCount:                   0,
+			}
+			room.RaftStore.SetRoom(gameroom.RoomID, gameroom)
+		}
+		//Store user data into room raft
+		userdata := room.User{UserID: zmq.GetPublicIP(), NodeType: nodeType,
+			Name: username}
+		room.RaftStore.SetUser(zmq.GetPublicIP(), userdata)
+		//Getting the room json
 		r.JSON(http.StatusOK, userjson)
 	})
 
-	// rooms  list all the rooms
+	// rooms list all the rooms
 	singleServer.m.Post("/getuser", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
@@ -148,10 +195,8 @@ func GetServer() *APIServer {
 			}
 		}
 		print("User id queries - " + userid)
-		//Get the user details from gavins method and return to front end
-		var userjson = map[string]interface{}{"user_id": userid, "name": "test_user",
-			"user_type": "liberal", "node_type": "test_role", "secret_role": "hitler"}
-		r.JSON(http.StatusOK, userjson)
+		userdata := room.RaftStore.GetUser(userid)
+		r.JSON(http.StatusOK, userdata)
 	})
 
 	// Register User
@@ -176,25 +221,16 @@ func GetServer() *APIServer {
 		jsonObj, _ := json.Marshal(RoomState)
 		roomstring := string(jsonObj)
 		raft.RaftStore.Set(strconv.Itoa(roomID), roomstring)
+
 		var roomjson = map[string]interface{}{
 			"room_id":                        RoomState.RoomID,
 			"curr_players":                   RoomState.CurrPlayers,
 			"global_comm_topic_name":         RoomState.GlobalComTopicName,
 			"global_notification_topic_name": RoomState.GlobalNotificationTopicName,
-			"no_of_policies_passed":          RoomState.NoPoliciesPassed,
-			"fascist_policies_passed":        RoomState.FascistPolciesPassed,
-			"liberal_policies_passed":        RoomState.LiberalPoliciesPassed,
-			"current_fascist_in_deck":        RoomState.CurrentFascistInDeck,
-			"current_liberal_in_deck":        RoomState.CurrentLiberalInDeck,
-			"current_total_in_deck":          RoomState.CurrentTotalInDeck,
-			"chancellor_id":                  RoomState.ChancellorID,
-			"president_id":                   RoomState.PresidentID,
 			"president_channel":              RoomState.PresidentChannel,
 			"chancellor_channel":             RoomState.ChancelorChannel,
-			"hitler_id":                      RoomState.HitlerID}
-
+		}
 		//Getting the room json and calling the update
-		print("Calling the room info update method!!")
 		roomrequest := urllib.Post("http://127.0.0.1:8000/add_base_room/")
 		roomrequest, err2 := roomrequest.JsonBody(roomjson)
 		if err2 != nil {
@@ -202,22 +238,7 @@ func GetServer() *APIServer {
 			r.Error(500)
 		}
 		roomrequest.String()
-
-		//Initialize raft for the game that you are about to join
-		if room.RaftStore != nil {
-			room.RaftStore.Close() //If there is a session currently, close it
-		}
-		room.RaftStore = room.New()
-		err := room.RaftStore.InitRoomRaft()
-		if err != nil {
-			println(err.Error())
-			r.Error(500)
-		}
-
-		//calling the method to tell others you have joined
-		NewPlayerChannel <- RoomState
-
-		r.JSON(http.StatusOK, "")
+		r.JSON(http.StatusOK, RoomState)
 	})
 
 	// Get the room details
@@ -254,7 +275,7 @@ func GetServer() *APIServer {
 					role = "Liberal"
 				case number >= 5 && number <= 6:
 					role = "Fascist"
-			        case number == 7:
+				case number == 7:
 					role = "Hitler"
 				default:
 					println("Control shouldn't reach here. Error")
@@ -266,7 +287,7 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, "")
 	})
 
-	// check if it's super node and see who it attach to
+	// check if it's super node and see who its attach to
 	singleServer.m.Get("/getRole", func(args martini.Params, r render.Render) {
 		role := room.RaftStore.GetRole(zmq.GetPublicIP())
 		r.JSON(http.StatusOK, map[string]interface{}{"role": role})
@@ -293,8 +314,12 @@ func GetServer() *APIServer {
 	})
 
 	// userlist  see the userlist
-	singleServer.m.Get("/userlist", func(args martini.Params, r render.Render) {
-		r.JSON(http.StatusOK, map[string]interface{}{"userlist": singleServer.userList})
+	singleServer.m.Get("/playerlist", func(args martini.Params, r render.Render) {
+		peers, err := room.ReadPeersJSON()
+		if err != nil {
+			r.Error(500)
+		}
+		r.JSON(http.StatusOK, map[string]interface{}{"players": peers})
 	})
 
 	//----Begin gameplay logic
@@ -306,173 +331,172 @@ func GetServer() *APIServer {
 	})
 
 	//----Get the identity of Hitler
-        singleServer.m.Get("/gethitler", func(args martini.Params, r render.Render) {
-                hitler := room.RaftStore.GetHitler()
-                r.JSON(http.StatusOK, map[string]interface{}{"hitler": hitler})
-        })
+	singleServer.m.Get("/gethitler", func(args martini.Params, r render.Render) {
+		hitler := room.RaftStore.GetHitler()
+		r.JSON(http.StatusOK, map[string]interface{}{"hitler": hitler})
+	})
 
 	//----Get the president's identity
-        singleServer.m.Get("/getpresident", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	singleServer.m.Get("/getpresident", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 
-                president := room.RaftStore.GetPresident(roomId[0])
-                r.JSON(http.StatusOK, map[string]interface{}{"president": president})
-        })
+		president := room.RaftStore.GetPresident(roomId[0])
+		r.JSON(http.StatusOK, map[string]interface{}{"president": president})
+	})
 
 	//----Set the president role to the next logical president
-        singleServer.m.Get("switchpresident", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	singleServer.m.Get("switchpresident", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 
-                room.RaftStore.SwitchPres(roomId[0])
-                r.JSON(http.StatusOK, "")
-        })
+		room.RaftStore.SwitchPres(roomId[0])
+		r.JSON(http.StatusOK, "")
+	})
 
 	//----President can call this to set their choice for chancelor
-        singleServer.m.Get("/setchancellor", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	singleServer.m.Get("/setchancellor", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 		userId := v["1"]
 
 		room.RaftStore.SetChancellor(roomId[0], userId[0])
-                r.JSON(http.StatusOK, "")
-        })
+		r.JSON(http.StatusOK, "")
+	})
 
 	//----Draw 3 cards
-        singleServer.m.Get("/drawthree", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	singleServer.m.Get("/drawthree", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 
-                cards := room.RaftStore.DrawThree(roomId[0])
-                r.JSON(http.StatusOK, map[string]interface{}{"cards": cards})
-        })
+		cards := room.RaftStore.DrawThree(roomId[0])
+		r.JSON(http.StatusOK, map[string]interface{}{"cards": cards})
+	})
 
 	//----The president can pass 2 cards to the chancellor
-        singleServer.m.Get("/passtwo", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	singleServer.m.Get("/passtwo", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 		cards := v["1"]
 
-                room.RaftStore.PassTwo(roomId[0], cards[0])
-                r.JSON(http.StatusOK, "")
-        })
+		room.RaftStore.PassTwo(roomId[0], cards[0])
+		r.JSON(http.StatusOK, "")
+	})
 
 	//----The chancellor can send in their card to play
-        singleServer.m.Get("/playselected", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	singleServer.m.Get("/playselected", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 		card := v["1"]
 
-                room.RaftStore.PlaySelected(roomId[0], card[0])
-                r.JSON(http.StatusOK, "")
-        })
+		room.RaftStore.PlaySelected(roomId[0], card[0])
+		r.JSON(http.StatusOK, "")
+	})
 
 	//----If the vote for president/chancellor fails, increment the counter
-        singleServer.m.Get("/hangparlament", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	singleServer.m.Get("/hangparlament", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 
-                count := room.RaftStore.GetPresident(roomId[0])
-                r.JSON(http.StatusOK, map[string]interface{}{"count": count})
-        })
-
+		count := room.RaftStore.GetPresident(roomId[0])
+		r.JSON(http.StatusOK, map[string]interface{}{"count": count})
+	})
 
 	//----Play a random card from the top of the deck
-        singleServer.m.Get("/playrandom", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	singleServer.m.Get("/playrandom", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 
-                room.RaftStore.PlayRandom(roomId[0])
-                r.JSON(http.StatusOK, "")
-        })
+		room.RaftStore.PlayRandom(roomId[0])
+		r.JSON(http.StatusOK, "")
+	})
 
 	//----Vote for the current president chancellor pair. 1 for no, 0 for yes
-        singleServer.m.Get("/vote", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                userId := v["0"]
+	singleServer.m.Get("/vote", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		userId := v["0"]
 		vote := v["1"]
 
-                room.RaftStore.Vote(userId[0], vote[0])
-                r.JSON(http.StatusOK, "")
-        })
+		room.RaftStore.Vote(userId[0], vote[0])
+		r.JSON(http.StatusOK, "")
+	})
 
 	//----Get the results of the last vote!
 	singleServer.m.Get("/voteresults", func(args martini.Params, r render.Render) {
 
-                result := room.RaftStore.VoteResults()
-                r.JSON(http.StatusOK, map[string]interface{}{"results": result})
-        })
+		result := room.RaftStore.VoteResults()
+		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
+	})
 
-        //----Investigate a user
-        singleServer.m.Get("/investigaterole", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                userId := v["0"]
-
-                result := room.RaftStore.InvestigateRole(userId[0])
-                r.JSON(http.StatusOK, map[string]interface{}{"role": result})
-        })
-
-        //----Get the results of the last vote!
-        singleServer.m.Get("/rigelection", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
-		userId := v["1"]
-
-                room.RaftStore.RigElection(roomId[0], userId[0])
-                r.JSON(http.StatusOK, "")
-        })
-
-        //----Kill a user
-        singleServer.m.Get("/killuser", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
+	//----Investigate a user
+	singleServer.m.Get("/investigaterole", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
 		userId := v["0"]
 
-                room.RaftStore.KillUser(userId[0])
-                r.JSON(http.StatusOK, "")
-        })
+		result := room.RaftStore.InvestigateRole(userId[0])
+		r.JSON(http.StatusOK, map[string]interface{}{"role": result})
+	})
 
-        //----Check for a game over condition(0 if no winner, 1 if Liberals won, 2 if fascists won)
-        singleServer.m.Get("/isGameOver", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	//----Get the results of the last vote!
+	singleServer.m.Get("/rigelection", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
+		userId := v["1"]
 
-                result := room.RaftStore.IsGameOver(roomId[0])
-                r.JSON(http.StatusOK, map[string]interface{}{"results": result})
-        })
+		room.RaftStore.RigElection(roomId[0], userId[0])
+		r.JSON(http.StatusOK, "")
+	})
+
+	//----Kill a user
+	singleServer.m.Get("/killuser", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		userId := v["0"]
+
+		room.RaftStore.KillUser(userId[0])
+		r.JSON(http.StatusOK, "")
+	})
+
+	//----Check for a game over condition(0 if no winner, 1 if Liberals won, 2 if fascists won)
+	singleServer.m.Get("/isGameOver", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
+
+		result := room.RaftStore.IsGameOver(roomId[0])
+		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
+	})
 
 	//----Special Case: Check after a kill if hitler is dead
-        singleServer.m.Get("/ishitlerdead", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	singleServer.m.Get("/ishitlerdead", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 
-                result := room.RaftStore.IsHitlerDead(roomId[0])
-                r.JSON(http.StatusOK, map[string]interface{}{"results": result})
-        })
+		result := room.RaftStore.IsHitlerDead(roomId[0])
+		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
+	})
 
-        //----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
-        singleServer.m.Get("/ishitlerchancelor", func(req *http.Request, r render.Render) {
-                body, _ := ioutil.ReadAll(req.Body)
-                v, _ := url.ParseQuery(string(body))
-                roomId := v["0"]
+	//----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
+	singleServer.m.Get("/ishitlerchancelor", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, _ := url.ParseQuery(string(body))
+		roomId := v["0"]
 
-                result := room.RaftStore.IsHitlerChancellor(roomId[0])
-                r.JSON(http.StatusOK, map[string]interface{}{"results": result})
-        })
+		result := room.RaftStore.IsHitlerChancellor(roomId[0])
+		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
+	})
 
         //----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
         singleServer.m.Get("/ispresident", func(req *http.Request, r render.Render) {
@@ -483,6 +507,64 @@ func GetServer() *APIServer {
                 result := room.RaftStore.IsPresident(roomId[0])
                 r.JSON(http.StatusOK, map[string]interface{}{"isPresident": result})
         })
+	//----wait for a particlular string to be sent over the channel, then return
+	singleServer.m.Get("/wait", func(req *http.Request, r render.Render) {
+		r.JSON(http.StatusOK, "")
+	})
+
+	//----set the webrtc id for the handshake
+	singleServer.m.Get("/setwebrtcid", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		var f interface{}
+		err := json.Unmarshal(body, &f)
+		if err != nil {
+			r.Error(500)
+		}
+		m := f.(map[string]interface{})
+		name1 := m["peer_a"].(string)
+		name2 := m["peer_b"].(string)
+		compare := strings.Compare(name1, name2)
+		//Generate the key for the pair
+		key := ""
+		if compare < 0 {
+			key = name1 + name2
+		} else {
+			key = name2 + name1
+		}
+		//check if the data for the key already exists
+		data := room.RaftStore.GetWebrtc(key)
+		if data != nil {
+			data[m["set_peer"].(string)] = m["video_id"].(string)
+			room.RaftStore.SetWebrtc(key, data)
+		} else {
+			data := make(map[string]string)
+			data[m["set_peer"].(string)] = m["video_id"].(string)
+			room.RaftStore.SetWebrtc(key, data)
+		}
+		r.JSON(http.StatusOK, map[string]interface{}{"success": true})
+	})
+
+	//get the id for the handshake
+	singleServer.m.Get("/getwebrtcid", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, err := url.ParseQuery(string(body))
+		if err != nil {
+			r.Error(500)
+		}
+		//get the key
+		var keyvalue string
+		for key, value := range v {
+			if key == "key" {
+				keyvalue = value[0]
+			}
+		}
+		data := room.RaftStore.GetWebrtc(keyvalue)
+		if data == nil {
+			r.JSON(http.StatusOK, map[string]interface{}{"success": false})
+		}
+		r.JSON(http.StatusOK, map[string]interface{}{"success": true,
+			"data": data})
+	})
 
 	return singleServer
 }

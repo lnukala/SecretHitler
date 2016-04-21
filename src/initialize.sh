@@ -13,4 +13,3 @@ go install userinfo
 go install apiserver
 go install raft
 go install run
-go install test

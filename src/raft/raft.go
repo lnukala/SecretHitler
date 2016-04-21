@@ -46,17 +46,8 @@ type Room struct {
 	CurrPlayers                 string
 	GlobalComTopicName          string
 	GlobalNotificationTopicName string
-	NoPoliciesPassed            int
-	FascistPolciesPassed        int
-	LiberalPoliciesPassed       int
-	CurrentFascistInDeck        int
-	CurrentLiberalInDeck        int
-	CurrentTotalInDeck          int
-	ChancellorID                int
-	PresidentID                 int
 	PresidentChannel            string
 	ChancelorChannel            string
-	HitlerID                    int
 }
 
 //User : structure respresenting the user information stored
@@ -100,7 +91,7 @@ func (s *Store) InitRaft() error {
 	raftbind := ":5557"
 
 	// Setup Raft communication.
-	addr, err := net.ResolveTCPAddr("tcp", raftbind)
+	addr, err := net.ResolveTCPAddr("tcp", zmq.GetPublicIP()+raftbind)
 	if err != nil {
 		return err
 	}
@@ -304,14 +295,12 @@ func (s *Store) GetRoom(roomID int) Room {
 	response, _ := s.Get(roomString)
 
 	if len(response) == 0 {
-		print("Creating new room!!!!")
-		room := Room{roomID, "", "coms", "notifications", 0, 0, 0, 11, 6, 17, -1, -1, "pres", "chan", -1}
+		room := Room{roomID, "", "coms", "notifications", "pres", "chan"}
 		jsonObj, _ := json.Marshal(room)
 		response = string(jsonObj)
 		s.Set(roomString, response)
 		return room
 	}
-	print("Returning the old room!!!")
 	byteResponse := []byte(response)
 	json.Unmarshal(byteResponse, &roomResponse)
 	return roomResponse
