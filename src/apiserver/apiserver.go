@@ -499,9 +499,58 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, "")
 	})
 
-	//----Notify waiting people that the condition provided has resolved
-	singleServer.m.Get("/notify", func(req *http.Request, r render.Render) {
-		r.JSON(http.StatusOK, "")
+	//----set the webrtc id for the handshake
+	singleServer.m.Get("/setwebrtcid", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		var f interface{}
+		err := json.Unmarshal(body, &f)
+		if err != nil {
+			r.Error(500)
+		}
+		m := f.(map[string]interface{})
+		name1 := m["peer_a"].(string)
+		name2 := m["peer_b"].(string)
+		compare := strings.Compare(name1, name2)
+		//Generate the key for the pair
+		key := ""
+		if compare < 0 {
+			key = name1 + name2
+		} else {
+			key = name2 + name1
+		}
+		//check if the data for the key already exists
+		data := room.RaftStore.GetWebrtc(key)
+		if data != nil {
+			data[m["set_peer"].(string)] = m["video_id"].(string)
+			room.RaftStore.SetWebrtc(key, data)
+		} else {
+			data := make(map[string]string)
+			data[m["set_peer"].(string)] = m["video_id"].(string)
+			room.RaftStore.SetWebrtc(key, data)
+		}
+		r.JSON(http.StatusOK, map[string]interface{}{"success": true})
+	})
+
+	//get the id for the handshake
+	singleServer.m.Get("/getwebrtcid", func(req *http.Request, r render.Render) {
+		body, _ := ioutil.ReadAll(req.Body)
+		v, err := url.ParseQuery(string(body))
+		if err != nil {
+			r.Error(500)
+		}
+		//get the key
+		var keyvalue string
+		for key, value := range v {
+			if key == "key" {
+				keyvalue = value[0]
+			}
+		}
+		data := room.RaftStore.GetWebrtc(keyvalue)
+		if data == nil {
+			r.JSON(http.StatusOK, map[string]interface{}{"success": false})
+		}
+		r.JSON(http.StatusOK, map[string]interface{}{"success": true,
+			"data": data})
 	})
 
 	return singleServer

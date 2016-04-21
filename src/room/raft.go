@@ -322,6 +322,11 @@ func ReadPeersJSON() ([]string, error) {
 		return nil, err
 	}
 
+	//remove the ports from the ip:port
+	for index, peer := range peers {
+		peers[index] = strings.Split(peer, ":")[0]
+	}
+
 	return peers, nil
 }
 
@@ -379,6 +384,26 @@ func (s *Store) SetRole(peer string, role string) {
 func (s *Store) GetRole(name string) string {
 	user := s.GetUser(name)
 	return user.SecretRole
+}
+
+//SetWebrtc : Convenience method: set webrtc details
+func (s *Store) SetWebrtc(Key string, WebRTCdata map[string]string) {
+	byteRoom, _ := json.Marshal(WebRTCdata)
+	webrtc := string(byteRoom)
+	s.Set(Key, webrtc)
+}
+
+//GetWebrtc : get webrtc details
+func (s *Store) GetWebrtc(Key string) map[string]string {
+	stringRoom, _ := s.Get(Key)
+	if stringRoom != "" {
+		byteRoom := []byte(stringRoom)
+		data := make(map[string]string)
+		json.Unmarshal(byteRoom, &data)
+		return data
+	} else {
+		return nil
+	}
 }
 
 //GetFascist : Return the identity of your fascist ally
