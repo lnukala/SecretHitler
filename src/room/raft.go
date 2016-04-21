@@ -690,3 +690,13 @@ func(s *Store) IsHitlerChancellor(roomId string) string{
 	}
 	return "0"
 }
+
+func (s *Store) IsPresident(roomId string) string{
+
+	room := s.GetRoom(roomId)
+	if(strings.Compare(room.PresidentID, zmq.GetPublicIP()) == 0) {
+		return "true"
+	}
+
+	return "false"
+}

@@ -474,14 +474,14 @@ func GetServer() *APIServer {
                 r.JSON(http.StatusOK, map[string]interface{}{"results": result})
         })
 
-	//----wait for a particlular string to be sent over the channel, then return
-        singleServer.m.Get("/wait", func(req *http.Request, r render.Render) {
-		r.JSON(http.StatusOK, "")
-        })
+        //----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
+        singleServer.m.Get("/ispresident", func(req *http.Request, r render.Render) {
+                body, _ := ioutil.ReadAll(req.Body)
+                v, _ := url.ParseQuery(string(body))
+                roomId := v["0"]
 
-	//----Notify waiting people that the condition provided has resolved
-        singleServer.m.Get("/notify", func(req *http.Request, r render.Render) {
-                r.JSON(http.StatusOK,"")
+                result := room.RaftStore.IsPresident(roomId[0])
+                r.JSON(http.StatusOK, map[string]interface{}{"isPresident": result})
         })
 
 	return singleServer
