@@ -116,7 +116,7 @@ func GetServer() *APIServer {
 
 		//Creating the user json
 		var userjson = map[string]interface{}{"user_id": singleServer.uid,
-			"name": username, "user_type": "", "node_type": nodeType,
+			"name": username, "user_type": -1, "node_type": nodeType,
 			"secret_role": ""}
 		var registerationjson = singleServer.uid + "," +
 			username + "," + "liberal" + "," + nodeType + "," + "hitler"
