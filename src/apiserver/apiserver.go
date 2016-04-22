@@ -362,13 +362,13 @@ func GetServer() *APIServer {
 	})
 
 	// check if it's super node and see who its attach to
-	singleServer.m.Get("/getRole", func(args martini.Params, r render.Render) {
+	singleServer.m.Post("/getRole", func(args martini.Params, r render.Render) {
 		role := room.RaftStore.GetRole(zmq.GetPublicIP())
 		r.JSON(http.StatusOK, map[string]interface{}{"role": role})
 	})
 
 	//isLeader : check if the node is leader in the game raft
-	singleServer.m.Get("/isLeader", func(args martini.Params, r render.Render) {
+	singleServer.m.Post("/isLeader", func(args martini.Params, r render.Render) {
 		reply := "false"
 		if room.RaftStore.IsLeader() == true {
 			reply = "true"
