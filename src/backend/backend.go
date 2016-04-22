@@ -178,8 +178,18 @@ func Handle() {
 			roomjson := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
 			roomjson.CurrPlayers = RoomState.CurrPlayers
 			room.RaftStore.SetRoom(roomjson.RoomID, roomjson)
+
+			var new_roomjson = map[string]interface{}{
+				"room_id":                        RoomState.RoomID,
+				"curr_players":                   RoomState.CurrPlayers,
+				"global_comm_topic_name":         RoomState.GlobalComTopicName,
+				"global_notification_topic_name": RoomState.GlobalNotificationTopicName,
+				"president_channel":              RoomState.PresidentChannel,
+				"chancellor_channel":             RoomState.ChancelorChannel,
+			}
+
 			request := urllib.Put("http://127.0.0.1:8000/update_room/")
-			request, err := request.JsonBody(roomjson)
+			request, err := request.JsonBody(new_roomjson)
 			if err != nil {
 				println(err.Error())
 			} else {
