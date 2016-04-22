@@ -4,7 +4,6 @@ import (
 	"constants"
 	"encoding/json"
 	"io/ioutil"
-	"json"
 	"math"
 	"math/rand"
 	"net/http"
