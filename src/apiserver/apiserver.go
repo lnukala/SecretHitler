@@ -360,6 +360,7 @@ func GetServer() *APIServer {
 				println("reaching here to set the role for " + peers[i] + "as " + role)
 				room.RaftStore.SetRole(peers[i], role)
 			}
+			room.RaftStore.RigElection("0", zmq.GetPublicIP())
 		} else {
 			println("^^^^ Waiting for my role allocation!!!!!")
 			time.Sleep(3000 * time.Millisecond)
