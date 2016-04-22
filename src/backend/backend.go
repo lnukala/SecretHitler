@@ -174,7 +174,9 @@ func Handle() {
 		case "newPlayer":
 			println("<----------------- New Player being added")
 			Subscribe(params, RoomState.GlobalComTopicName) //subscribe to the new node
-			room.RaftStore.Join(params + ":5558")           //add new node to the room raft
+			if room.RaftStore.IsLeader() == true {
+				room.RaftStore.Join(params + ":5558") //add new node to the room raft
+			}
 			println("<----------- Adding to list of player:: Recieving Local variable")
 			RoomState.CurrPlayers = RoomState.CurrPlayers + "," + params
 

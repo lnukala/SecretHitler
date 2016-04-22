@@ -345,7 +345,8 @@ func ReadPeersJSON() ([]string, error) {
 
 //IsLeader :read the peers in the game
 func (s *Store) IsLeader() bool {
-	if s.raft.Leader() == zmq.GetPublicIP() {
+	leader_ip := strings.Split(s.raft.Leader(), ":")
+	if leader_ip[0] == zmq.GetPublicIP() {
 		return true
 	}
 	return false
