@@ -122,7 +122,7 @@ func GetServer() *APIServer {
 			username + "," + "liberal" + "," + nodeType + "," + "hitler"
 		//Call the DNS to send the requet to a super node
 		println("[LOGIN] @@@@@@@ Calling the register user")
-		registerationrequest := urllib.Post("http://secrethitler.lnukala.me:3000/registeruser/")
+		registerationrequest := urllib.Post("http://" + singleServer.attachedTo + ":3000/registeruser/")
 		registerationrequest, err := registerationrequest.JsonBody(registerationjson)
 		if err != nil {
 			println(err.Error())
@@ -149,7 +149,7 @@ func GetServer() *APIServer {
 		player := make(map[string]string)
 		player["IP"] = zmq.GetPublicIP()
 		println("[LOGIN] @@@@@@@ Calling the get room")
-		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
+		roomrequest := urllib.Post("http://" + singleServer.attachedTo + ":3000/getroom/")
 		roomrequest, err = roomrequest.JsonBody(player)
 		if err != nil {
 			println(err.Error())

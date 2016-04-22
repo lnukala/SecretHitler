@@ -240,6 +240,7 @@ func cleanRecords() {
 
 // Bootstrap  bootstrap routine
 func Bootstrap(server *apiserver.APIServer) bool {
+	println("$$$$$$$$ Coming to the bootstrap")
 	cleanRecords()
 	client := dnsimple.GetClient()
 	records := dnsimple.GetRecords(client)
@@ -252,13 +253,15 @@ func Bootstrap(server *apiserver.APIServer) bool {
 		}
 	}
 	if len(records) < constants.MaxSuperNumber {
+		println("$$$$$$$$$$$$ I AM A SUPER NODE")
 		Promote() // tell other supernodesI'm a supernode and subscribe
 		for _, superrec := range records {
 			server.AddSuperNode(superrec.Content) // pass the super nodes info to APIServer
 		}
 		server.SetSuper(true) // I'm a supernode
+		println("$$$$$$$$$$$$ Sending him as a supernode")
 		server.AddSuperNode(zmq.GetPublicIP())
-		Publish("subnode", "adduser", zmq.GetPublicIP())
+		//Publish("subnode", "adduser", zmq.GetPublicIP())
 		isSuper = true
 	} else {
 		rnn := rand.Int() % len(records)
