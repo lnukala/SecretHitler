@@ -165,7 +165,7 @@ func GetServer() *APIServer {
 		println("<----------- Passing it to the others")
 		//calling the method to tell others you have joined
 		NewPlayerChannel <- roomstate
-		time.Sleep(10000 * time.Millisecond)
+		time.Sleep(3000 * time.Millisecond)
 
 		//check if there are peers in the room raft, if not, store the room state
 		peers, err := room.ReadPeersJSON()
@@ -230,6 +230,9 @@ func GetServer() *APIServer {
 	// Register User
 	singleServer.m.Post("/getroom", func(req *http.Request, r render.Render) {
 		println("@@@@@@@@@@ <------------- Calling the get room")
+		peers, _ := room.ReadPeersJSON()
+		print("Number of people in current raft room are : ")
+		print(len(peers))
 		RoomState := raft.RaftStore.GetRoom(roomID)
 		println("@@@@@@@@@@ Getting the player")
 		players := strings.Split(RoomState.CurrPlayers, ",")
@@ -355,7 +358,6 @@ func GetServer() *APIServer {
 					r.Error(500)
 				}
 				println("reaching here to set the role for " + peers[i] + "as " + role)
-				role = "Fascist"
 				room.RaftStore.SetRole(peers[i], role)
 			}
 		} else {
