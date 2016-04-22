@@ -393,6 +393,7 @@ func (s *Store) SetRole(peer string, role string) {
 	user.SecretRole = role
 	println("<-------- In room.faft.setrole setting role as " + user.SecretRole + " for " + peer)
 	s.SetUser(peer, user)
+	println("<-------- getting the role for the user " + peer + " as " + s.GetUser(peer).SecretRole)
 }
 
 //GetRole : Return your role in the game
