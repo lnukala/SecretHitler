@@ -175,7 +175,7 @@ func GetServer() *APIServer {
 		println("<-------------- Setting the user")
 		room.RaftStore.SetUser(zmq.GetPublicIP(), userdata)
 		println("<---------- Getting the user")
-		new_userdata := room.RaftStore.GetUser(userid)
+		new_userdata := room.RaftStore.GetUser(zmq.GetPublicIP())
 		var new_userjson = map[string]interface{}{"user_id": new_userdata.UserID,
 			"name": new_userdata.Name, "user_type": new_userdata.UserType, "node_type": userdata.NodeType,
 			"secret_role": new_userdata.SecretRole}
