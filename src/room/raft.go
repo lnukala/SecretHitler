@@ -146,7 +146,7 @@ func (s *Store) Get(key string) (string, error) {
 func (s *Store) Set(key string, value string) error {
 	if s.raft.State() != raft.Leader {
 		leader_ip := strings.Split(s.raft.Leader(), ":")
-		roomrequest := urllib.Post("http://" + leader_ip[0] + ":3000/registeruser/")
+		roomrequest := urllib.Post("http://" + leader_ip[0] + ":3000/raftset/")
 		roomjson := make(map[string]string)
 		roomjson["key"] = key
 		roomjson["value"] = value
