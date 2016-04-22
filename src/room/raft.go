@@ -18,6 +18,7 @@ import (
 	"time"
 	"zmq"
 
+	"github.com/GiterLab/urllib"
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/raft-boltdb"
 )
@@ -144,14 +145,17 @@ func (s *Store) Get(key string) (string, error) {
 // Set sets the value for the given key.
 func (s *Store) Set(key string, value string) error {
 	if s.raft.State() != raft.Leader {
-		println("###############" + s.raft.Leader())
-		// roomrequest := urllib.Post("http://"+s.raft.Leader()+":3000/registeruser/")
-		// roomrequest, err2 := roomrequest.JsonBody(roomjson)
-		// if err2 != nil {
-		// 	println(err2.Error())
-		// 	r.Error(500)
-		// }
-		// roomrequest.String()
+		leader_ip := strings.split(s.raft.Leader(), ":")
+		roomrequest := urllib.Post("http://" + leader_ip[0] + ":3000/registeruser/")
+		roomjson := make(map[string]string)
+		roomjson["key"] = key
+		roomjson["value"] = value
+		roomrequest, err2 := roomrequest.JsonBody(roomjson)
+		if err2 != nil {
+			println("<----------- Not reachable!!!!")
+			return fmt.Errorf("not rechable")
+		}
+		roomrequest.String()
 		return fmt.Errorf("not leader")
 	}
 	c := &command{
