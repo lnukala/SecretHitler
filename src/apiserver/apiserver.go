@@ -399,19 +399,19 @@ func GetServer() *APIServer {
 	//----Begin gameplay logic
 
 	//----Get the identity of the other fascist in the game
-	singleServer.m.Get("/getfascist", func(args martini.Params, r render.Render) {
+	singleServer.m.Post("/getfascist", func(args martini.Params, r render.Render) {
 		fascist := room.RaftStore.GetFascist()
 		r.JSON(http.StatusOK, map[string]interface{}{"fascist": fascist})
 	})
 
 	//----Get the identity of Hitler
-	singleServer.m.Get("/gethitler", func(args martini.Params, r render.Render) {
+	singleServer.m.Post("/gethitler", func(args martini.Params, r render.Render) {
 		hitler := room.RaftStore.GetHitler()
 		r.JSON(http.StatusOK, map[string]interface{}{"hitler": hitler})
 	})
 
 	//----Get the president's identity
-	singleServer.m.Get("/getpresident", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/getpresident", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -421,7 +421,7 @@ func GetServer() *APIServer {
 	})
 
 	//----Set the president role to the next logical president
-	singleServer.m.Get("switchpresident", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("switchpresident", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -431,7 +431,7 @@ func GetServer() *APIServer {
 	})
 
 	//----President can call this to set their choice for chancelor
-	singleServer.m.Get("/setchancellor", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/setchancellor", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -442,7 +442,7 @@ func GetServer() *APIServer {
 	})
 
 	//----Draw 3 cards
-	singleServer.m.Get("/drawthree", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/drawthree", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -452,7 +452,7 @@ func GetServer() *APIServer {
 	})
 
 	//----The president can pass 2 cards to the chancellor
-	singleServer.m.Get("/passtwo", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/passtwo", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -463,7 +463,7 @@ func GetServer() *APIServer {
 	})
 
 	//----The chancellor can send in their card to play
-	singleServer.m.Get("/playselected", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/playselected", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -474,7 +474,7 @@ func GetServer() *APIServer {
 	})
 
 	//----If the vote for president/chancellor fails, increment the counter
-	singleServer.m.Get("/hangparlament", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/hangparlament", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -484,7 +484,7 @@ func GetServer() *APIServer {
 	})
 
 	//----Play a random card from the top of the deck
-	singleServer.m.Get("/playrandom", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/playrandom", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -494,7 +494,7 @@ func GetServer() *APIServer {
 	})
 
 	//----Vote for the current president chancellor pair. 1 for no, 0 for yes
-	singleServer.m.Get("/vote", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/vote", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		userId := v["0"]
@@ -505,14 +505,14 @@ func GetServer() *APIServer {
 	})
 
 	//----Get the results of the last vote!
-	singleServer.m.Get("/voteresults", func(args martini.Params, r render.Render) {
+	singleServer.m.Post("/voteresults", func(args martini.Params, r render.Render) {
 
 		result := room.RaftStore.VoteResults()
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
 	//----Investigate a user
-	singleServer.m.Get("/investigaterole", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/investigaterole", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		userId := v["0"]
@@ -522,7 +522,7 @@ func GetServer() *APIServer {
 	})
 
 	//----Get the results of the last vote!
-	singleServer.m.Get("/rigelection", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/rigelection", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -533,7 +533,7 @@ func GetServer() *APIServer {
 	})
 
 	//----Kill a user
-	singleServer.m.Get("/killuser", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/killuser", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		userId := v["0"]
@@ -543,7 +543,7 @@ func GetServer() *APIServer {
 	})
 
 	//----Check for a game over condition(0 if no winner, 1 if Liberals won, 2 if fascists won)
-	singleServer.m.Get("/isGameOver", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/isGameOver", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -553,7 +553,7 @@ func GetServer() *APIServer {
 	})
 
 	//----Special Case: Check after a kill if hitler is dead
-	singleServer.m.Get("/ishitlerdead", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/ishitlerdead", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -563,7 +563,7 @@ func GetServer() *APIServer {
 	})
 
 	//----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
-	singleServer.m.Get("/ishitlerchancelor", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/ishitlerchancelor", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
@@ -573,7 +573,7 @@ func GetServer() *APIServer {
 	})
 
 	//----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
-	singleServer.m.Get("/ispresident", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/ispresident", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		roomId := v["0"]
