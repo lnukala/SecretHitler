@@ -121,6 +121,7 @@ func GetServer() *APIServer {
 		var registerationjson = singleServer.uid + "," +
 			username + "," + "liberal" + "," + nodeType + "," + "hitler"
 		//Call the DNS to send the requet to a super node
+		println("[LOGIN] @@@@@@@ Calling the register user")
 		registerationrequest := urllib.Post("http://secrethitler.lnukala.me:3000/registeruser/")
 		registerationrequest, err := registerationrequest.JsonBody(registerationjson)
 		if err != nil {
@@ -134,6 +135,7 @@ func GetServer() *APIServer {
 			room.RaftStore.Close() //If there is a session currently, close it
 		}
 
+		println("[LOGIN] @@@@@@@ Initialise the room raft")
 		room.RaftStore = room.New()
 		err = room.RaftStore.InitRoomRaft()
 		if err != nil {
@@ -146,6 +148,7 @@ func GetServer() *APIServer {
 		//Getting the room json
 		player := make(map[string]string)
 		player["IP"] = zmq.GetPublicIP()
+		println("[LOGIN] @@@@@@@ Calling the get room")
 		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
 		roomrequest, err = roomrequest.JsonBody(player)
 		if err != nil {
@@ -226,7 +229,9 @@ func GetServer() *APIServer {
 
 	// Register User
 	singleServer.m.Post("/getroom", func(req *http.Request, r render.Render) {
+		println("@@@@@@@@@@ <------------- Calling the get room")
 		RoomState := raft.RaftStore.GetRoom(roomID)
+		println("@@@@@@@@@@ Getting the player")
 		players := strings.Split(RoomState.CurrPlayers, ",")
 		if len(players) >= constants.MaxPlayers {
 			if roomID < math.MaxInt32 {
@@ -237,6 +242,8 @@ func GetServer() *APIServer {
 			raft.RaftStore.Delete(strconv.Itoa(roomID))
 			RoomState = raft.RaftStore.GetRoom(roomID)
 		}
+
+		println("[LOGIN] @@@@@@@ Reading the data from the players")
 		//read the data from the player and add to the list of players stored
 		player := make(map[string]string)
 		body, _ := ioutil.ReadAll(req.Body)
@@ -263,6 +270,7 @@ func GetServer() *APIServer {
 			"chancellor_channel":             RoomState.ChancelorChannel,
 		}
 		//Getting the room json and calling the update
+
 		roomrequest := urllib.Post("http://127.0.0.1:8000/add_base_room/")
 		roomrequest, err2 := roomrequest.JsonBody(roomjson)
 		if err2 != nil {
