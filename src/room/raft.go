@@ -168,7 +168,7 @@ func (s *Store) Set(key string, value string) error {
 	if err != nil {
 		return err
 	}
-
+	println("Aplying changes!")
 	f := s.raft.Apply(b, raftTimeout)
 	if err, ok := f.(error); ok {
 		return err
@@ -366,9 +366,9 @@ func (s *Store) GetUser(userID string) User {
 
 //SetUser : set user details in room raft
 func (s *Store) SetUser(userID string, user User) {
-
 	byteUser, _ := json.Marshal(user)
 	stringUser := string(byteUser)
+	println("calling set!")
 	s.Set(userID, stringUser)
 }
 
@@ -394,6 +394,7 @@ func (s *Store) SetRole(peer string, role string) {
 	user.SecretRole = role
 	println("<-------- In room.faft.setrole setting role as " + user.SecretRole + " for " + peer)
 	s.SetUser(peer, user)
+	time.Sleep(3000 * time.Millisecond)
 	println("<-------- getting the role for the user " + peer + " as " + s.GetUser(peer).SecretRole)
 }
 
