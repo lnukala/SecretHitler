@@ -391,6 +391,7 @@ func (s *Store) GetRoom(RoomID string) Room {
 func (s *Store) SetRole(peer string, role string) {
 	user := s.GetUser(peer)
 	user.SecretRole = role
+	println("<-------- In room.faft.setrole setting role as " + user.SecretRole + " for " + peer)
 	s.SetUser(peer, user)
 }
 
@@ -422,17 +423,20 @@ func (s *Store) GetWebrtc(Key string) map[string]string {
 
 //GetFascist : Return the identity of your fascist ally
 func (s *Store) GetFascist() string {
-
+	fascist := ""
 	peerList, _ := ReadPeersJSON()
 	for _, peer := range peerList {
 		user := s.GetUser(peer)
 		if strings.Compare(user.SecretRole, "Fascist") == 0 &&
 			strings.Compare(user.UserID, zmq.GetPublicIP()) != 0 {
-			return user.UserID
+			if fascist == "" {
+				fascist = fascist + user.UserID
+			} else {
+				fascist = fascist + "," + user.UserID
+			}
 		}
 	}
-	//----SOMETHING IS WRONG
-	return ""
+	return fascist
 }
 
 //GetHitler : Return the identity of hitler

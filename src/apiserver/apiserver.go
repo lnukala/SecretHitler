@@ -354,7 +354,7 @@ func GetServer() *APIServer {
 					println("Control shouldn't reach here. Error")
 					r.Error(500)
 				}
-				println("reaching here to set the role for " + peers[i])
+				println("reaching here to set the role for " + peers[i] + "as " + role)
 				room.RaftStore.SetRole(peers[i], role)
 			}
 		} else {
