@@ -362,18 +362,20 @@ func GetServer() *APIServer {
 	})
 
 	// check if it's super node and see who its attach to
-	singleServer.m.Post("/getRole", func(args martini.Params, r render.Render) {
+	singleServer.m.Post("/getRole", func(req *http.Request, r render.Render) {
 		role := room.RaftStore.GetRole(zmq.GetPublicIP())
-		r.JSON(http.StatusOK, map[string]interface{}{"role": role})
+		var rolejson = map[string]interface{}{"role": role}
+		r.JSON(http.StatusOK, rolejson)
 	})
 
 	//isLeader : check if the node is leader in the game raft
-	singleServer.m.Post("/isLeader", func(args martini.Params, r render.Render) {
+	singleServer.m.Post("/isLeader", func(req *http.Request, r render.Render) {
 		reply := "false"
 		if room.RaftStore.IsLeader() == true {
 			reply = "true"
 		}
-		r.JSON(http.StatusOK, map[string]interface{}{"leader": reply})
+		var isleader = map[string]interface{}{"leader": reply}
+		r.JSON(http.StatusOK, isleader)
 	})
 
 	// check if it's super node and see who it attach to
@@ -399,15 +401,17 @@ func GetServer() *APIServer {
 	//----Begin gameplay logic
 
 	//----Get the identity of the other fascist in the game
-	singleServer.m.Post("/getfascist", func(args martini.Params, r render.Render) {
+	singleServer.m.Post("/getfascist", func(req *http.Request, r render.Render) {
 		fascist := room.RaftStore.GetFascist()
-		r.JSON(http.StatusOK, map[string]interface{}{"fascist": fascist})
+		var fascistjson = map[string]interface{}{"fascist": fascist}
+		r.JSON(http.StatusOK, fascistjson)
 	})
 
 	//----Get the identity of Hitler
-	singleServer.m.Post("/gethitler", func(args martini.Params, r render.Render) {
+	singleServer.m.Post("/gethitler", func(req *http.Request, r render.Render) {
 		hitler := room.RaftStore.GetHitler()
-		r.JSON(http.StatusOK, map[string]interface{}{"hitler": hitler})
+		var hitlerjson = map[string]interface{}{"hitler": hitler}
+		r.JSON(http.StatusOK, hitlerjson)
 	})
 
 	//----Get the president's identity
