@@ -129,10 +129,15 @@ func GetServer() *APIServer {
 		}
 		registerationrequest.String()
 
-		println("<----------- Calling the get room")
-
 		//Getting the room json
+		player := make(map[string]string)
+		player["IP"] = zmq.GetPublicIP()
 		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
+		roomrequest, err = roomrequest.JsonBody(player)
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
 		bytes, reqerr := roomrequest.Bytes()
 		if reqerr != nil {
 			println(reqerr.Error())
@@ -218,10 +223,17 @@ func GetServer() *APIServer {
 			raft.RaftStore.Delete(strconv.Itoa(roomID))
 			RoomState = raft.RaftStore.GetRoom(roomID)
 		}
+		//read the data from the player and add to the list of players stored
+		player := make(map[string]string)
+		body, _ := ioutil.ReadAll(req.Body)
+		err := json.Unmarshal(body, &player)
+		if err != nil {
+			r.Error(500)
+		}
 		if RoomState.CurrPlayers != "" {
-			RoomState.CurrPlayers = RoomState.CurrPlayers + "," + zmq.GetPublicIP()
+			RoomState.CurrPlayers = RoomState.CurrPlayers + "," + player["IP"]
 		} else {
-			RoomState.CurrPlayers = zmq.GetPublicIP()
+			RoomState.CurrPlayers = player["IP"]
 		}
 		println("[APISERVER] Current players in the room are " + RoomState.CurrPlayers)
 		jsonObj, _ := json.Marshal(RoomState)
