@@ -144,6 +144,14 @@ func (s *Store) Get(key string) (string, error) {
 // Set sets the value for the given key.
 func (s *Store) Set(key string, value string) error {
 	if s.raft.State() != raft.Leader {
+		println("###############" + s.raft.Leader())
+		// roomrequest := urllib.Post("http://"+s.raft.Leader()+":3000/registeruser/")
+		// roomrequest, err2 := roomrequest.JsonBody(roomjson)
+		// if err2 != nil {
+		// 	println(err2.Error())
+		// 	r.Error(500)
+		// }
+		// roomrequest.String()
 		return fmt.Errorf("not leader")
 	}
 	c := &command{

@@ -4,6 +4,7 @@ import (
 	"constants"
 	"encoding/json"
 	"io/ioutil"
+	"json"
 	"math"
 	"math/rand"
 	"net/http"
@@ -158,13 +159,11 @@ func GetServer() *APIServer {
 		}
 		roomstate := raft.Room{}
 		json.Unmarshal(bytes, &roomstate)
-
-		time.Sleep(7000 * time.Millisecond)
-
+		time.Sleep(3000 * time.Millisecond)
 		println("<----------- Passing it to the others")
 		//calling the method to tell others you have joined
 		NewPlayerChannel <- roomstate
-		time.Sleep(7000 * time.Millisecond)
+		time.Sleep(3000 * time.Millisecond)
 
 		//check if there are peers in the room raft, if not, store the room state
 		peers, err := room.ReadPeersJSON()
@@ -285,6 +284,20 @@ func GetServer() *APIServer {
 			userjson = key
 		}
 		raft.RaftStore.StoreUser(userjson)
+		r.JSON(http.StatusOK, "")
+	})
+
+	// Get the room details
+	singleServer.m.Post("/raftset", func(req *http.Request, r render.Render) {
+		println("<-------------- Setting the user on the leader")
+		body, _ := ioutil.ReadAll(req.Body)
+		data := make(map[string]string)
+		err := json.Unmarshal(body, &data)
+		if err != nil {
+			println("<----------- Error")
+			r.Error(500)
+		}
+		room.RaftStore.Set(data["key"], data["value"])
 		r.JSON(http.StatusOK, "")
 	})
 
