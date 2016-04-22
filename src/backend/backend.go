@@ -188,7 +188,7 @@ func Handle() {
 				"chancellor_channel":             RoomState.ChancelorChannel,
 			}
 
-			request := urllib.Put("http://127.0.0.1:8000/update_room/")
+			request := urllib.Post("http://127.0.0.1:8000/update_room/")
 			request, err := request.JsonBody(new_roomjson)
 			if err != nil {
 				println(err.Error())
