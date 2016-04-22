@@ -323,7 +323,8 @@ func GetServer() *APIServer {
 	})
 
 	//allocrole : called by leader when 8 players join. Only works in leader
-	singleServer.m.Get("/allocrole", func(args martini.Params, r render.Render) {
+	singleServer.m.Post("/allocrole", func(req *http.Request, r render.Render) {
+		println("Coming here!!!!!!")
 		if room.RaftStore.IsLeader() == true {
 			println("I AM THE LEADER ALLOCATING ROLE!!!!!")
 			peers, err := room.ReadPeersJSON()
