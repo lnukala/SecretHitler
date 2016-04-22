@@ -137,11 +137,9 @@ func GetServer() *APIServer {
 		}
 		roomstate := raft.Room{}
 		json.Unmarshal(bytes, &roomstate)
-
-		time.Sleep(3000 * time.Millisecond)
-
 		//calling the method to tell others you have joined
 		NewPlayerChannel <- roomstate
+		time.Sleep(3000 * time.Millisecond)
 
 		//check if there are peers in the room raft, if not, store the room state
 		peers, err := room.ReadPeersJSON()
@@ -186,7 +184,12 @@ func GetServer() *APIServer {
 		}
 		print("User id queries - " + userid)
 		userdata := room.RaftStore.GetUser(userid)
-		r.JSON(http.StatusOK, userdata)
+
+		var userjson = map[string]interface{}{"user_id": userdata.UserID,
+			"name": userdata.Name, "user_type": userdata.UserType, "node_type": userdata.NodeType,
+			"secret_role": userdata.SecretRole}
+
+		r.JSON(http.StatusOK, userjson)
 	})
 
 	// Register User
