@@ -300,6 +300,20 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, "")
 	})
 
+	// Get the room details
+	singleServer.m.Post("/raftSuperSet", func(req *http.Request, r render.Render) {
+		println("<-------------- Setting the user on the leader")
+		body, _ := ioutil.ReadAll(req.Body)
+		data := make(map[string]string)
+		err := json.Unmarshal(body, &data)
+		if err != nil {
+			println("<----------- Error")
+			r.Error(500)
+		}
+		raft.RaftStore.Set(data["key"], data["value"])
+		r.JSON(http.StatusOK, "")
+	})
+
 	//allocrole : called by leader when 8 players join. Only works in leader
 	singleServer.m.Get("/allocrole", func(args martini.Params, r render.Render) {
 		if room.RaftStore.IsLeader() == true {
