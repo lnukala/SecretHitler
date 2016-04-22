@@ -159,10 +159,12 @@ func GetServer() *APIServer {
 		roomstate := raft.Room{}
 		json.Unmarshal(bytes, &roomstate)
 
+		time.Sleep(7000 * time.Millisecond)
+
 		println("<----------- Passing it to the others")
 		//calling the method to tell others you have joined
 		NewPlayerChannel <- roomstate
-		time.Sleep(3000 * time.Millisecond)
+		time.Sleep(7000 * time.Millisecond)
 
 		//check if there are peers in the room raft, if not, store the room state
 		peers, err := room.ReadPeersJSON()
