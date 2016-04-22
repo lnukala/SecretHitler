@@ -367,7 +367,14 @@ func GetServer() *APIServer {
 
 	// check if it's super node and see who its attach to
 	singleServer.m.Post("/getRole", func(req *http.Request, r render.Render) {
-		role := room.RaftStore.GetRole(zmq.GetPublicIP())
+		role := ""
+		for role == "" {
+			role = room.RaftStore.GetRole(zmq.GetPublicIP())
+			if role == "" {
+				println("-------------WAITING TO GET ROLE")
+				time.Sleep(1000 * time.Millisecond)
+			}
+		}
 		var rolejson = map[string]interface{}{"role": role}
 		r.JSON(http.StatusOK, rolejson)
 	})
