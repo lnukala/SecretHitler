@@ -146,7 +146,9 @@ func (s *Store) Get(key string) (string, error) {
 func (s *Store) Set(key string, value string) error {
 	if s.raft.State() != raft.Leader {
 		println("Should not come here for allocation")
+		println("Setting in the room raft!!")
 		leader_ip := strings.Split(s.raft.Leader(), ":")
+		println("sending request to " + leader_ip[0])
 		roomrequest := urllib.Post("http://" + leader_ip[0] + ":3000/raftset/")
 		roomjson := make(map[string]string)
 		roomjson["key"] = key
@@ -158,6 +160,9 @@ func (s *Store) Set(key string, value string) error {
 		}
 		roomrequest.String()
 		return fmt.Errorf("not leader")
+	} else {
+		print("setting on local ! ")
+		println(zmq.GetPublicIP())
 	}
 	c := &command{
 		Op:    "set",
