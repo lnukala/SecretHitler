@@ -189,14 +189,14 @@ func GetServer() *APIServer {
 		}
 		//Store user data into room raft
 		userdata := room.User{UserID: zmq.GetPublicIP(), NodeType: nodeType,
-			Name: username}
+			Name: username, UserType: -1}
 
 		println("<-------------- Setting the user")
 		room.RaftStore.SetUser(zmq.GetPublicIP(), userdata)
 		println("<---------- Getting the user")
-		new_userdata := room.RaftStore.GetUser(zmq.GetPublicIP())
+		newuserdata := room.RaftStore.GetUser(zmq.GetPublicIP())
 		//Getting the room json
-		println(new_userdata.Name)
+		println(newuserdata.Name)
 		println("<------------------------")
 		r.JSON(http.StatusOK, userjson)
 	})

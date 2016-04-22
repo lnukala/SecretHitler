@@ -67,7 +67,7 @@ type Room struct {
 type User struct {
 	UserID     string
 	Name       string
-	UserType   string
+	UserType   int
 	NodeType   string
 	SecretRole string
 	Vote       int
