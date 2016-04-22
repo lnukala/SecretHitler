@@ -219,6 +219,7 @@ func (f *fsm) Apply(l *raft.Log) interface{} {
 	}
 	switch c.Op {
 	case "set":
+		println("<----------- Reaching here!!!!!")
 		return f.applySet(c.Key, c.Value)
 	case "delete":
 		return f.applyDelete(c.Key)
@@ -715,10 +716,10 @@ func (s *Store) IsHitlerChancellor(RoomID string) string {
 	return constants.InProgress
 }
 
-func (s *Store) IsPresident(roomId string) string{
+func (s *Store) IsPresident(roomId string) string {
 
 	room := s.GetRoom(roomId)
-	if(strings.Compare(room.PresidentID, zmq.GetPublicIP()) == 0) {
+	if strings.Compare(room.PresidentID, zmq.GetPublicIP()) == 0 {
 		return "true"
 	}
 
