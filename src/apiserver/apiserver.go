@@ -194,6 +194,9 @@ func GetServer() *APIServer {
 		}
 		print("User id queries - " + userid)
 		userdata := room.RaftStore.GetUser(userid)
+		println("<---------- Getting the user")
+		println(userdata.Name)
+		println("<------------------------")
 
 		var userjson = map[string]interface{}{"user_id": userdata.UserID,
 			"name": userdata.Name, "user_type": userdata.UserType, "node_type": userdata.NodeType,
