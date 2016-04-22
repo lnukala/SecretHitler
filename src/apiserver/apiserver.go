@@ -333,7 +333,9 @@ func GetServer() *APIServer {
 				r.Error(500)
 			}
 			roles := mapset.NewSet()
+			println("length of peers : " + len(peers))
 			for i := 0; i < len(peers); i++ {
+				println("looping in allocrole")
 				number := rand.Intn(constants.MaxPlayers)
 				for roles.Contains(number) == true {
 					number = rand.Intn(constants.MaxPlayers) //pick a unique number
@@ -351,6 +353,7 @@ func GetServer() *APIServer {
 					println("Control shouldn't reach here. Error")
 					r.Error(500)
 				}
+				println("reaching here to set the role for " + peers[i])
 				room.RaftStore.SetRole(peers[i], role)
 			}
 		} else {
