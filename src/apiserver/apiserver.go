@@ -333,7 +333,8 @@ func GetServer() *APIServer {
 				r.Error(500)
 			}
 			roles := mapset.NewSet()
-			println("length of peers : " + len(peers))
+			print("length of peers : ")
+			println(len(peers))
 			for i := 0; i < len(peers); i++ {
 				println("looping in allocrole")
 				number := rand.Intn(constants.MaxPlayers)
