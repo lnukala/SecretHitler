@@ -4,8 +4,6 @@ import (
 	api "apiserver"
 	"backend"
 	raft "raft"
-	"room"
-	"time"
 	"zmq"
 )
 
@@ -30,16 +28,5 @@ func main() {
 		backend.Publish("supernode", "raftPromote", zmq.GetPublicIP())
 		//room := raft.GetRoom(0) //TODO This is the magical room id, should probably get changed at some point
 	}
-	//Initialize raft for the game that you are about to join
-	if room.RaftStore != nil {
-		room.RaftStore.Close() //If there is a session currently, close it
-	}
-	room.RaftStore = room.New()
-	err := room.RaftStore.InitRoomRaft()
-	if err != nil {
-		println(err.Error())
-	}
-	time.Sleep(1000 * time.Millisecond)
-
 	select {}
 }

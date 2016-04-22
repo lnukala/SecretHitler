@@ -129,6 +129,18 @@ func GetServer() *APIServer {
 		}
 		registerationrequest.String()
 
+		//Initialize raft for the game that you are about to join
+		if room.RaftStore != nil {
+			room.RaftStore.Close() //If there is a session currently, close it
+		}
+
+		room.RaftStore = room.New()
+		err = room.RaftStore.InitRoomRaft()
+		if err != nil {
+			println(err.Error())
+		}
+		time.Sleep(3000 * time.Millisecond)
+
 		println("<----------- Calling the get room")
 
 		//Getting the room json
