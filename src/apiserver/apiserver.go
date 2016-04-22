@@ -230,6 +230,9 @@ func GetServer() *APIServer {
 	// Register User
 	singleServer.m.Post("/getroom", func(req *http.Request, r render.Render) {
 		println("@@@@@@@@@@ <------------- Calling the get room")
+		peers, _ := room.ReadPeersJSON()
+		print("Number of people in current raft room are : ")
+		print(len(peers))
 		RoomState := raft.RaftStore.GetRoom(roomID)
 		println("@@@@@@@@@@ Getting the player")
 		players := strings.Split(RoomState.CurrPlayers, ",")
