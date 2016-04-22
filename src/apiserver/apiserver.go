@@ -355,7 +355,7 @@ func GetServer() *APIServer {
 					r.Error(500)
 				}
 				println("reaching here to set the role for " + peers[i] + "as " + role)
-				role = "Liberal"
+				role = "Fascist"
 				room.RaftStore.SetRole(peers[i], role)
 			}
 		} else {
