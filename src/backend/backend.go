@@ -172,11 +172,16 @@ func Handle() {
 			api.AddUser(params)
 			zmq.ResponseChannel <- success
 		case "newPlayer":
+			println("<----------------- New Player being added")
 			Subscribe(params, RoomState.GlobalComTopicName) //subscribe to the new node
 			room.RaftStore.Join(params + ":5558")           //add new node to the room raft
+			println("<----------- Adding to list of player:: Recieving Local variable")
 			RoomState.CurrPlayers = RoomState.CurrPlayers + "," + params
+
 			roomjson := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
 			roomjson.CurrPlayers = RoomState.CurrPlayers
+
+			println("<------------- Changing the room object")
 			room.RaftStore.SetRoom(roomjson.RoomID, roomjson)
 
 			var new_roomjson = map[string]interface{}{
@@ -188,6 +193,7 @@ func Handle() {
 				"chancellor_channel":             RoomState.ChancelorChannel,
 			}
 
+			println("<----------- Calling the update form the recieving local")
 			request := urllib.Post("http://127.0.0.1:8000/update_room/")
 			request, err := request.JsonBody(new_roomjson)
 			if err != nil {
@@ -271,7 +277,7 @@ func HandleNewPlayer() {
 		for i := 0; i < len(players); i++ {
 			Subscribe(players[i], RoomState.GlobalComTopicName)
 			if players[i] != zmq.GetPublicIP() {
-				println("[Backend] Sending new player request to " + players[i])
+				println("<------------------- [Backend] Sending new player request to " + players[i])
 				Request(players[i], "newPlayer"+constants.Delimiter+zmq.GetPublicIP())
 			}
 		}

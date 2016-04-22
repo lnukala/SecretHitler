@@ -129,6 +129,8 @@ func GetServer() *APIServer {
 		}
 		registerationrequest.String()
 
+		println("<----------- Calling the get room")
+
 		//Getting the room json
 		roomrequest := urllib.Post("http://secrethitler.lnukala.me:3000/getroom/")
 		bytes, reqerr := roomrequest.Bytes()
@@ -137,6 +139,8 @@ func GetServer() *APIServer {
 		}
 		roomstate := raft.Room{}
 		json.Unmarshal(bytes, &roomstate)
+
+		println("<----------- Passing it to the others")
 		//calling the method to tell others you have joined
 		NewPlayerChannel <- roomstate
 		time.Sleep(3000 * time.Millisecond)
