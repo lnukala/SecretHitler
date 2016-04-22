@@ -271,7 +271,7 @@ func GetServer() *APIServer {
 		}
 		//Getting the room json and calling the update
 
-		roomrequest := urllib.Post("http://127.0.0.1:8000/add_base_room/")
+		roomrequest := urllib.Post("http://" + player["IP"] + ":8000/add_base_room/")
 		roomrequest, err2 := roomrequest.JsonBody(roomjson)
 		if err2 != nil {
 			println(err2.Error())
