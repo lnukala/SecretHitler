@@ -325,6 +325,7 @@ func GetServer() *APIServer {
 	//allocrole : called by leader when 8 players join. Only works in leader
 	singleServer.m.Get("/allocrole", func(args martini.Params, r render.Render) {
 		if room.RaftStore.IsLeader() == true {
+			println("I AM THE LEADER ALLOCATING ROLE!!!!!")
 			peers, err := room.ReadPeersJSON()
 			if err != nil {
 				println(err.Error())
@@ -351,7 +352,11 @@ func GetServer() *APIServer {
 				}
 				room.RaftStore.SetRole(peers[i], role)
 			}
+		} else {
+			println("^^^^ Waiting for my role allocation!!!!!")
+			time.Sleep(3000 * time.Millisecond)
 		}
+
 		r.JSON(http.StatusOK, "")
 	})
 
