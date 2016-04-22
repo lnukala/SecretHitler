@@ -135,6 +135,7 @@ func (s *Store) Get(key string) (string, error) {
 // Set sets the value for the given key.
 func (s *Store) Set(key string, value string) error {
 	if s.raft.State() != raft.Leader {
+		println("<---------- Setting the MAIN RAFT!!!!")
 		println("<----------- Setting on the leader!!!!!")
 		leader_ip := strings.Split(s.raft.Leader(), ":")
 		roomrequest := urllib.Post("http://" + leader_ip[0] + ":3000/raftSuperSet/")

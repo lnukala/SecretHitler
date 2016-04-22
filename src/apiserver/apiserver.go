@@ -430,9 +430,15 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/getpresident", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
 
-		president := room.RaftStore.GetPresident(roomId[0])
+		var roomId string
+		for key, value := range v {
+			if key == "roomId" {
+				roomId = value[0]
+			}
+		}
+
+		president := room.RaftStore.GetPresident(roomId)
 		r.JSON(http.StatusOK, map[string]interface{}{"president": president})
 	})
 
@@ -597,6 +603,7 @@ func GetServer() *APIServer {
 		result := room.RaftStore.IsPresident(roomId[0])
 		r.JSON(http.StatusOK, map[string]interface{}{"isPresident": result})
 	})
+
 	//----wait for a particlular string to be sent over the channel, then return
 	singleServer.m.Get("/wait", func(req *http.Request, r render.Render) {
 		r.JSON(http.StatusOK, "")
