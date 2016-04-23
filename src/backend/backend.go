@@ -211,24 +211,24 @@ func Handle() {
 			request := urllib.Put("http://127.0.0.1:8000/update_room/")
 			room := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
 
-                        var new_roomjson = map[string]interface{}{
-                                "room_id":                        room.RoomID,
-                                "curr_players":                   room.CurrPlayers,
-                                "global_comm_topic_name":         room.GlobalComTopicName,
-                                "global_notification_topic_name": room.GlobalNotificationTopicName,
-				"no_policies_passed":		  room.NoPoliciesPassed,
-				"fascist_policies_passed":	  room.FascistPoliciesPassed,
+			var new_roomjson = map[string]interface{}{
+				"room_id":                        room.RoomID,
+				"curr_players":                   room.CurrPlayers,
+				"global_comm_topic_name":         room.GlobalComTopicName,
+				"global_notification_topic_name": room.GlobalNotificationTopicName,
+				"no_policies_passed":             room.NoPoliciesPassed,
+				"fascist_policies_passed":        room.FascistPoliciesPassed,
 				"liberal_policies_passed":        room.LiberalPoliciesPassed,
-				"current_fascist_in_deck":	  room.CurrentFascistInDeck,
+				"current_fascist_in_deck":        room.CurrentFascistInDeck,
 				"current_liberal_in_deck":        room.CurrentLiberalInDeck,
-				"current_total_in_deck"  :	  room.CurrentTotalInDeck,
-				"chancellor_id":		  room.ChancellorID,
-				"president_id" :		  room.PresidentID,
-                                "president_channel":              room.PresidentChannel,
-                                "chancellor_channel":             room.ChancelorChannel,
-				"hung_count":			  room.HungCount,
-				"president_choice":		  room.PresidentChoice,
-                        }
+				"current_total_in_deck":          room.CurrentTotalInDeck,
+				"chancellor_id":                  room.ChancellorID,
+				"president_id":                   room.PresidentID,
+				"president_channel":              room.PresidentChannel,
+				"chancellor_channel":             room.ChancelorChannel,
+				"hung_count":                     room.HungCount,
+				"president_choice":               room.PresidentChoice,
+			}
 
 			request, err := request.JsonBody(new_roomjson)
 			if err != nil {
@@ -312,33 +312,36 @@ func HandleNewPlayer() {
 //SendRoomUpdate : Send the updated room info to all players in the room
 //MUST BE CALLED ONLY ON THE PRESIDENT!!!!!!
 func SendRoomUpdate() {
-	room := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
+	for {
+		run := <-apiserver.SendRoomUpdateChannel
+		room := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
 
-        var new_roomjson = map[string]interface{}{
-		"room_id":                        room.RoomID,
-                "curr_players":                   room.CurrPlayers,
-                "global_comm_topic_name":         room.GlobalComTopicName,
-                "global_notification_topic_name": room.GlobalNotificationTopicName,
-                "no_policies_passed":             room.NoPoliciesPassed,
-                "fascist_policies_passed":        room.FascistPoliciesPassed,
-                "liberal_policies_passed":        room.LiberalPoliciesPassed,
-                "current_fascist_in_deck":        room.CurrentFascistInDeck,
-                "current_liberal_in_deck":        room.CurrentLiberalInDeck,
-                "current_total_in_deck"  :        room.CurrentTotalInDeck,
-                "chancellor_id":                  room.ChancellorID,
-                "president_id" :                  room.PresidentID,
-                "president_channel":              room.PresidentChannel,
-                "chancellor_channel":             room.ChancelorChannel,
-                "hung_count" :                    room.HungCount,
-                "president_choice" :              room.PresidentChoice,
-        }
+		var new_roomjson = map[string]interface{}{
+			"room_id":                        room.RoomID,
+			"curr_players":                   room.CurrPlayers,
+			"global_comm_topic_name":         room.GlobalComTopicName,
+			"global_notification_topic_name": room.GlobalNotificationTopicName,
+			"no_policies_passed":             room.NoPoliciesPassed,
+			"fascist_policies_passed":        room.FascistPoliciesPassed,
+			"liberal_policies_passed":        room.LiberalPoliciesPassed,
+			"current_fascist_in_deck":        room.CurrentFascistInDeck,
+			"current_liberal_in_deck":        room.CurrentLiberalInDeck,
+			"current_total_in_deck":          room.CurrentTotalInDeck,
+			"chancellor_id":                  room.ChancellorID,
+			"president_id":                   room.PresidentID,
+			"president_channel":              room.PresidentChannel,
+			"chancellor_channel":             room.ChancelorChannel,
+			"hung_count":                     room.HungCount,
+			"president_choice":               room.PresidentChoice,
+		}
 
-	Publish(room.GlobalComTopicName, "updateRoom", "")
-	request := urllib.Put("http://127.0.0.1:8000/update_room/")
-	request, err := request.JsonBody(new_roomjson)
-	if err != nil {
-		println(err.Error())
-	} else {
-		request.String()
+		Publish(room.GlobalComTopicName, "updateRoom", "")
+		request := urllib.Put("http://127.0.0.1:8000/update_room/")
+		request, err := request.JsonBody(new_roomjson)
+		if err != nil {
+			println(err.Error())
+		} else {
+			request.String()
+		}
 	}
 }
