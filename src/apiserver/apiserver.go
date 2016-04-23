@@ -667,9 +667,9 @@ func GetServer() *APIServer {
 		data := room.RaftStore.GetWebrtc(keyvalue)
 		if data == nil {
 			r.JSON(http.StatusOK, map[string]interface{}{"success": false})
+			return
 		}
-		r.JSON(http.StatusOK, map[string]interface{}{"success": true,
-			"data": data})
+		r.JSON(http.StatusOK, map[string]interface{}{"success": true, "data": data})
 	})
 
 	return singleServer
