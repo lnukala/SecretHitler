@@ -653,18 +653,9 @@ func GetServer() *APIServer {
 
 	//get the id for the handshake
 	singleServer.m.Get("/getwebrtcid", func(req *http.Request, r render.Render) {
-		body, _ := ioutil.ReadAll(req.Body)
-		v, err := url.ParseQuery(string(body))
-		if err != nil {
-			r.Error(500)
-		}
-		//get the key
-		var keyvalue string
-		for key, value := range v {
-			if key == "key" {
-				keyvalue = value[0]
-			}
-		}
+		query := req.URL.Query()
+		keyvalue := query.Get("key")
+
 		println("Getting webrtc id: " + keyvalue)
 		data := room.RaftStore.GetWebrtc(keyvalue)
 		if data == nil {
