@@ -37,6 +37,9 @@ var singleServer *APIServer
 //NewPlayerChannel :new player info is passed here
 var NewPlayerChannel = make(chan raft.Room)
 
+//SendRoomChannel :pass "run" here to send update
+var SendRoomUpdateChannel = make(chan string)
+
 //RoomID : The ID of the room being returned
 var roomID int
 
