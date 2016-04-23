@@ -447,11 +447,8 @@ func GetServer() *APIServer {
 
 	//----Set the president role to the next logical president
 	singleServer.m.Post("switchpresident", func(req *http.Request, r render.Render) {
-		body, _ := ioutil.ReadAll(req.Body)
-		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
-
-		room.RaftStore.SwitchPres(roomId[0])
+		//----TODO room id forced
+		room.RaftStore.SwitchPres("0")
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -459,20 +456,16 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/setchancellor", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
-		userId := v["1"]
+		userId := v["chancellor"]
 
-		room.RaftStore.SetChancellor(roomId[0], userId[0])
+		room.RaftStore.SetChancellor("0", userId[0])
 		r.JSON(http.StatusOK, "")
 	})
 
 	//----Draw 3 cards
 	singleServer.m.Post("/drawthree", func(req *http.Request, r render.Render) {
-		body, _ := ioutil.ReadAll(req.Body)
-		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
 
-		cards := room.RaftStore.DrawThree(roomId[0])
+		cards := room.RaftStore.DrawThree("0")
 		r.JSON(http.StatusOK, map[string]interface{}{"cards": cards})
 	})
 
@@ -480,10 +473,9 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/passtwo", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
 		cards := v["1"]
 
-		room.RaftStore.PassTwo(roomId[0], cards[0])
+		room.RaftStore.PassTwo("0", cards[0])
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -523,7 +515,7 @@ func GetServer() *APIServer {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		userId := v["0"]
-		vote := v["1"]
+		vote := v["vote"]
 
 		room.RaftStore.Vote(userId[0], vote[0])
 		r.JSON(http.StatusOK, "")
