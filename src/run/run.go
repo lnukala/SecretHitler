@@ -21,6 +21,7 @@ func main() {
 	go backend.Handle() //set up the handler for the messages received
 	go backend.HandleNewPlayer()
 	go backend.SendRoomUpdate()
+	go backend.IVotedUpdate()
 	isSuper := backend.Bootstrap(s)
 	//----TODO Integrate GetRoom as necessry
 	if isSuper { //----We only set up sn stuff if we're a sn

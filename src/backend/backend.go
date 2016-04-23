@@ -238,11 +238,12 @@ func Handle() {
 			}
 			zmq.ResponseChannel <- success
 		case "playerVoted":
-			if(strings.Compare(room.RaftStore.IsPresident(strconv.Itoa(RoomState.RoomID)), "true") == 0) {
-				if(strings.Compare(room.RaftStore.VoteResults(strconv.Itoa(RoomState.RoomID)), constants.NoVote) != 0) {
+			if strings.Compare(room.RaftStore.IsPresident(strconv.Itoa(RoomState.RoomID)), "true") == 0 {
+				if strings.Compare(room.RaftStore.VoteResults(strconv.Itoa(RoomState.RoomID)), constants.NoVote) != 0 {
 					SendRoomUpdate()
 				}
 			}
+			zmq.ResponseChannel <- success
 		default:
 			println("No logic added to handle this method. Please check!")
 			zmq.ResponseChannel <- success
@@ -361,8 +362,8 @@ func IVotedUpdate() {
 		roomObj := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
 		Publish(roomObj.GlobalComTopicName, "playerVoted", "")
 		//----Need to check if we're the last vote
-		if(strings.Compare(room.RaftStore.IsPresident(strconv.Itoa(RoomState.RoomID)), "true") == 0) {
-			if(strings.Compare(room.RaftStore.VoteResults(strconv.Itoa(RoomState.RoomID)), constants.NoVote) != 0) {
+		if strings.Compare(room.RaftStore.IsPresident(strconv.Itoa(RoomState.RoomID)), "true") == 0 {
+			if strings.Compare(room.RaftStore.VoteResults(strconv.Itoa(RoomState.RoomID)), constants.NoVote) != 0 {
 				SendRoomUpdate()
 			}
 		}
