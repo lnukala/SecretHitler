@@ -514,10 +514,9 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/vote", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
-		userId := v["0"]
 		vote := v["vote"]
 
-		room.RaftStore.Vote(userId[0], vote[0])
+		room.RaftStore.Vote(zmq.GetPublicIP(), vote[0])
 		r.JSON(http.StatusOK, "")
 	})
 
