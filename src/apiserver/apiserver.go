@@ -638,6 +638,7 @@ func GetServer() *APIServer {
 			key = name2 + name1
 		}
 		//check if the data for the key already exists
+		println("Setting webrtc id: " + key)
 		data := room.RaftStore.GetWebrtc(key)
 		if data != nil {
 			data[m["set_peer"].(string)] = m["video_id"].(string)
@@ -664,6 +665,7 @@ func GetServer() *APIServer {
 				keyvalue = value[0]
 			}
 		}
+		println("Getting webrtc id: " + keyvalue)
 		data := room.RaftStore.GetWebrtc(keyvalue)
 		if data == nil {
 			r.JSON(http.StatusOK, map[string]interface{}{"success": false})
