@@ -61,6 +61,7 @@ type Room struct {
 	HitlerID                    string
 	HungCount                   int
 	PresidentChoice             string
+	VoteResult		    int
 }
 
 //User : structure respresenting the user information stored
@@ -635,8 +636,10 @@ func (s *Store) Vote(userID string, vote string) {
 }
 
 //VoteResults ----Returns the results: 1 is NEIN, 0 is YA
-func (s *Store) VoteResults() string {
+func (s *Store) VoteResults(RoomID string) string{
 	var count int
+
+	room:= s.GetRoom(RoomID)
 
 	userList, _ := ReadPeersJSON()
 	count = 0
@@ -644,17 +647,37 @@ func (s *Store) VoteResults() string {
 
 	for _, userString := range userList {
 		user := s.GetUser(userString)
+		if(user.Vote == constants.NoVoteInt) {
+			return constants.NoVote
+		}
 		count += user.Vote
 	}
+
+	//----Should reset all votes if we got here
+	for _, userString := range userList {
+		user := s.GetUser(userString)
+		user.Vote = constants.NoVoteInt
+		s.SetUser(userString, user)
+	}
+
 	if deadCount == 2 {
 		if count >= 3 {
+			room.VoteResult = constants.NeinInt
+			s.SetRoom(RoomID, room)
 			return constants.Nein
 		}
+		room.VoteResult = constants.YaInt
+		s.SetRoom(RoomID, room)
 		return constants.Ya
 	}
 	if count >= 4 {
+		room.VoteResult = constants.NeinInt
+		s.SetRoom(RoomID, room)
 		return constants.Nein
 	}
+	room.VoteResult = constants.YaInt
+	s.SetRoom(RoomID, room)
+
 	return constants.Ya
 }
 

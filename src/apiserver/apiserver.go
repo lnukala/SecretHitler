@@ -37,6 +37,9 @@ var singleServer *APIServer
 //NewPlayerChannel :new player info is passed here
 var NewPlayerChannel = make(chan raft.Room)
 
+//VoteChannel :basically an "I voted" sticker
+var IVotedChannel = make(chan string)
+
 //SendRoomChannel :pass "run" here to send update
 var SendRoomUpdateChannel = make(chan string)
 
@@ -190,12 +193,13 @@ func GetServer() *APIServer {
 				CurrentLiberalInDeck:        6,
 				CurrentTotalInDeck:          17,
 				HungCount:                   0,
+				VoteResult:                  -1,
 			}
 			room.RaftStore.SetRoom(gameroom.RoomID, gameroom)
 		}
 		//Store user data into room raft
 		userdata := room.User{UserID: zmq.GetPublicIP(), NodeType: nodeType,
-			Name: username, UserType: -1}
+			Name: username, UserType: -1, Vote: -1}
 
 		println("<-------------- Setting the user")
 		room.RaftStore.SetUser(zmq.GetPublicIP(), userdata)
@@ -462,6 +466,7 @@ func GetServer() *APIServer {
 		userId := v["chancellor"]
 
 		room.RaftStore.SetChancellor("0", userId[0])
+		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -520,14 +525,8 @@ func GetServer() *APIServer {
 		vote := v["vote"]
 
 		room.RaftStore.Vote(zmq.GetPublicIP(), vote[0])
+		IVotedChannel <- "voted"
 		r.JSON(http.StatusOK, "")
-	})
-
-	//----Get the results of the last vote!
-	singleServer.m.Post("/voteresults", func(args martini.Params, r render.Render) {
-
-		result := room.RaftStore.VoteResults()
-		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
 	//----Investigate a user

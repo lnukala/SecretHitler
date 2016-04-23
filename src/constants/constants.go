@@ -15,6 +15,15 @@ const Ya = "0"
 /*Nein : a no vote*/
 const Nein = "1"
 
+/*NoVote: player has not yet voted*/
+const NoVote = "-1"
+
+const YaInt = 0
+
+const NeinInt = 1
+
+const NoVoteInt = -1
+
 /*InProgress : game in progress*/
 const InProgress = "0"
 
