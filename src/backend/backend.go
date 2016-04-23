@@ -240,7 +240,7 @@ func Handle() {
 		case "playerVoted":
 			if strings.Compare(room.RaftStore.IsPresident(strconv.Itoa(RoomState.RoomID)), "true") == 0 {
 				if strings.Compare(room.RaftStore.VoteResults(strconv.Itoa(RoomState.RoomID)), constants.NoVote) != 0 {
-					SendRoomUpdate()
+					updateRoom()
 				}
 			}
 			zmq.ResponseChannel <- success
@@ -321,51 +321,54 @@ func HandleNewPlayer() {
 func SendRoomUpdate() {
 	for {
 		run := <-apiserver.SendRoomUpdateChannel
-		run = run //Hack to compile...
+		println(run)
 		roomObj := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
-
-		var new_roomjson = map[string]interface{}{
-			"room_id":                        roomObj.RoomID,
-			"curr_players":                   roomObj.CurrPlayers,
-			"global_comm_topic_name":         roomObj.GlobalComTopicName,
-			"global_notification_topic_name": roomObj.GlobalNotificationTopicName,
-			"no_policies_passed":             roomObj.NoPoliciesPassed,
-			"fascist_policies_passed":        roomObj.FascistPoliciesPassed,
-			"liberal_policies_passed":        roomObj.LiberalPoliciesPassed,
-			"current_fascist_in_deck":        roomObj.CurrentFascistInDeck,
-			"current_liberal_in_deck":        roomObj.CurrentLiberalInDeck,
-			"current_total_in_deck":          roomObj.CurrentTotalInDeck,
-			"chancellor_id":                  roomObj.ChancellorID,
-			"president_id":                   roomObj.PresidentID,
-			"president_channel":              roomObj.PresidentChannel,
-			"chancellor_channel":             roomObj.ChancelorChannel,
-			"hung_count":                     roomObj.HungCount,
-			"president_choice":               roomObj.PresidentChoice,
-		}
-
 		Publish(roomObj.GlobalComTopicName, "updateRoom", "")
-		request := urllib.Put("http://127.0.0.1:8000/update_room/")
-		request, err := request.JsonBody(new_roomjson)
-		if err != nil {
-			println(err.Error())
-		} else {
-			request.String()
-		}
+		updateRoom()
 	}
 }
 
-//Just publish to the voting channel that you voted.
+//IVotedUpdate :Just publish to the voting channel that you voted.
 func IVotedUpdate() {
 	for {
 		run := <-apiserver.IVotedChannel
-		run = run
+		println(run)
 		roomObj := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
 		Publish(roomObj.GlobalComTopicName, "playerVoted", "")
 		//----Need to check if we're the last vote
 		if strings.Compare(room.RaftStore.IsPresident(strconv.Itoa(RoomState.RoomID)), "true") == 0 {
 			if strings.Compare(room.RaftStore.VoteResults(strconv.Itoa(RoomState.RoomID)), constants.NoVote) != 0 {
-				SendRoomUpdate()
+				updateRoom()
 			}
 		}
+	}
+}
+
+func updateRoom() {
+	roomObj := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
+	var new_roomjson = map[string]interface{}{
+		"room_id":                        roomObj.RoomID,
+		"curr_players":                   roomObj.CurrPlayers,
+		"global_comm_topic_name":         roomObj.GlobalComTopicName,
+		"global_notification_topic_name": roomObj.GlobalNotificationTopicName,
+		"no_policies_passed":             roomObj.NoPoliciesPassed,
+		"fascist_policies_passed":        roomObj.FascistPoliciesPassed,
+		"liberal_policies_passed":        roomObj.LiberalPoliciesPassed,
+		"current_fascist_in_deck":        roomObj.CurrentFascistInDeck,
+		"current_liberal_in_deck":        roomObj.CurrentLiberalInDeck,
+		"current_total_in_deck":          roomObj.CurrentTotalInDeck,
+		"chancellor_id":                  roomObj.ChancellorID,
+		"president_id":                   roomObj.PresidentID,
+		"president_channel":              roomObj.PresidentChannel,
+		"chancellor_channel":             roomObj.ChancelorChannel,
+		"hung_count":                     roomObj.HungCount,
+		"president_choice":               roomObj.PresidentChoice,
+	}
+	request := urllib.Put("http://127.0.0.1:8000/update_room/")
+	request, err := request.JsonBody(new_roomjson)
+	if err != nil {
+		println(err.Error())
+	} else {
+		request.String()
 	}
 }
