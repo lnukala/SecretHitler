@@ -210,9 +210,14 @@ func Handle() {
 		case "updateRoom":
 			request := urllib.Post("http://127.0.0.1:8000/update_room/")
 			roomObj := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
-
+			roomid, err := strconv.Atoi(roomObj.RoomID)
+			if err != nil {
+				println("Error!")
+				println(err.Error())
+				return
+			}
 			var new_roomjson = map[string]interface{}{
-				"room_id":                        roomObj.RoomID,
+				"room_id":                        roomid,
 				"curr_players":                   roomObj.CurrPlayers,
 				"global_comm_topic_name":         roomObj.GlobalComTopicName,
 				"global_notification_topic_name": roomObj.GlobalNotificationTopicName,
@@ -230,7 +235,7 @@ func Handle() {
 				"president_choice":               roomObj.PresidentChoice,
 			}
 
-			request, err := request.JsonBody(new_roomjson)
+			request, err = request.JsonBody(new_roomjson)
 			if err != nil {
 				println(err.Error())
 			} else {
@@ -347,8 +352,13 @@ func IVotedUpdate() {
 func updateRoom() {
 	roomObj := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
 	println("Getting room ID " + strconv.Itoa(RoomState.RoomID))
+	roomID, err := strconv.Atoi(roomObj.RoomID)
+	if err != nil {
+		println("Error!!!!!")
+		println(err.Error())
+	}
 	var new_roomjson = map[string]interface{}{
-		"room_id":                        roomObj.RoomID,
+		"room_id":                        roomID,
 		"curr_players":                   roomObj.CurrPlayers,
 		"global_comm_topic_name":         roomObj.GlobalComTopicName,
 		"global_notification_topic_name": roomObj.GlobalNotificationTopicName,
@@ -369,7 +379,7 @@ func updateRoom() {
 		"card_played":                    roomObj.CardPlayed,
 	}
 	request := urllib.Post("http://127.0.0.1:8000/update_room/")
-	request, err := request.JsonBody(new_roomjson)
+	request, err = request.JsonBody(new_roomjson)
 	if err != nil {
 		println(err.Error())
 	} else {
