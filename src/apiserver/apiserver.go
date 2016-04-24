@@ -462,7 +462,7 @@ func GetServer() *APIServer {
 
 		println("Setting chancellor to " + userId[0])
 		room.RaftStore.SetChancellor("0", userId[0])
-		sendRoomUpdateChannel <- "run"
+		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
