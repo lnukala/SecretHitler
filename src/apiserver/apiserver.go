@@ -477,6 +477,7 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/drawthree", func(req *http.Request, r render.Render) {
 
 		cards := room.RaftStore.DrawThree("0")
+		println("Cards to be sent " + cards)
 		r.JSON(http.StatusOK, map[string]interface{}{"card_id": cards})
 	})
 
