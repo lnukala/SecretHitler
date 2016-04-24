@@ -362,7 +362,10 @@ func updateRoom() {
 		"president_channel":              roomObj.PresidentChannel,
 		"chancellor_channel":             roomObj.ChancelorChannel,
 		"hung_count":                     roomObj.HungCount,
+		"vote_result":			  roomObj.VoteResult,
 		"president_choice":               roomObj.PresidentChoice,
+		"dead_list":			  roomObj.DeadList,
+		"card_played":			  roomObj.CardPlayed,
 	}
 	request := urllib.Post("http://127.0.0.1:8000/update_room/")
 	request, err := request.JsonBody(new_roomjson)

@@ -63,6 +63,7 @@ type Room struct {
 	PresidentChoice             string
 	VoteResult		    int
 	DeadList		    string
+	CardPlayed		    string
 }
 
 //User : structure respresenting the user information stored
@@ -543,11 +544,11 @@ func (s *Store) DrawThree(RoomID string) string {
 		if roll < room.CurrentLiberalInDeck {
 			room.CurrentLiberalInDeck--
 			room.CurrentTotalInDeck--
-			out += "Liberal"
+			out += "0"
 		} else {
 			room.CurrentFascistInDeck--
 			room.CurrentTotalInDeck--
-			out += "Fascist"
+			out += "7"
 		}
 		if i != 2 {
 			out += ","
@@ -595,11 +596,13 @@ func (s *Store) PlayRandom(RoomID string) {
 		room.CurrentLiberalInDeck--
 		room.CurrentTotalInDeck--
 		room.LiberalPoliciesPassed++
+		room.CardPlayed = "0"
 	} else {
 		//----Otherwise rolled a fascist
 		room.CurrentFascistInDeck--
 		room.CurrentTotalInDeck--
 		room.FascistPoliciesPassed++
+		room.CardPlayed = "7"
 	}
 
 	s.SetRoom(RoomID, room)
@@ -609,10 +612,12 @@ func (s *Store) PlayRandom(RoomID string) {
 func (s *Store) PlaySelected(RoomID string, card string) {
 	room := s.GetRoom(RoomID)
 
-	if strings.Compare(card, "Liberal") == 0 {
+	if strings.Compare(card, "0") == 0 {
 		room.LiberalPoliciesPassed++
+		room.CardPlayed = "0"
 	} else {
 		room.FascistPoliciesPassed++
+		room.CardPlayed = "7"
 	}
 
 	//----Also want to reset hungcount if we get here
@@ -792,6 +797,9 @@ func (s * Store) ResetRound(RoomId string) {
 	room.VoteResult = constants.NoVoteInt
 	//----Reset Last Chosen President Cards
 	room.PresidentChoice = ""
+
+	//----Reset Last Card Played
+	room.CardPlayed = ""
 
 	s.SetRoom(RoomId, room)
 }

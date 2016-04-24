@@ -195,8 +195,10 @@ func GetServer() *APIServer {
 				ChancellorID:                "",
 				HungCount:                   0,
 				VoteResult:                  -1,
+				CardPlayed:                   "",
 			}
 			room.RaftStore.SetRoom(gameroom.RoomID, gameroom)
+			room.RaftStore.Set("RoomID", gameroom.RoomID)
 		}
 		//Store user data into room raft
 		userdata := room.User{UserID: zmq.GetPublicIP(), NodeType: nodeType,
@@ -460,24 +462,24 @@ func GetServer() *APIServer {
 		v, _ := url.ParseQuery(string(body))
 		userId := v["chancellor"]
 
+		time.Sleep(3000 * time.Millisecond)
+
 		println("Setting chancellor to " + userId[0])
 		room.RaftStore.SetChancellor("0", userId[0])
-		sendRoomUpdateChannel <- "run"
-		r.JSON(http.StatusOK, "")
 	})
 
 	//----Draw 3 cards
 	singleServer.m.Post("/drawthree", func(req *http.Request, r render.Render) {
 
 		cards := room.RaftStore.DrawThree("0")
-		r.JSON(http.StatusOK, map[string]interface{}{"cards": cards})
+		r.JSON(http.StatusOK, map[string]interface{}{"card_id": cards})
 	})
 
 	//----The president can pass 2 cards to the chancellor
 	singleServer.m.Post("/passtwo", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
-		cards := v["0"]
+		cards := v["selected_cards"]
 
 		room.RaftStore.PassTwo("0", cards[0])
 		SendRoomUpdateChannel <- "run"
@@ -488,7 +490,7 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/playselected", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
-		card := v["0"]
+		card := v["selected_card"]
 
 		room.RaftStore.PlaySelected("0", card[0])
 		//TODO This should probably have its own channel
