@@ -386,6 +386,7 @@ func (s *Store) SetRoom(RoomID string, room Room) {
 	byteRoom, _ := json.Marshal(room)
 	stringRoom := string(byteRoom)
 	s.Set(RoomID, stringRoom)
+	time.Sleep(3000 * time.Millisecond)
 }
 
 //GetRoom : get room details
