@@ -181,7 +181,7 @@ func (s *Store) Set(key string, value string) error {
 	if err, ok := f.(error); ok {
 		return err
 	}
-	time.Sleep(3000 * time.Millisecond)
+	//time.Sleep(3000 * time.Millisecond)
 	return nil
 }
 
