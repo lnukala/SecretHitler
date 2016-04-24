@@ -570,6 +570,7 @@ func (s *Store) PassTwo(RoomID string, choice string) {
 	room := s.GetRoom(RoomID)
 
 	room.PresidentChoice = choice
+	room.VoteResult = -1
 
 	s.SetRoom(RoomID, room)
 }
@@ -626,7 +627,6 @@ func (s *Store) PlaySelected(RoomID string, card string) {
 		room.CardPlayed = "7"
 	}
 	room.VoteResult = -1
-
 	//----Also want to reset hungcount if we get here
 	room.HungCount = 0
 
