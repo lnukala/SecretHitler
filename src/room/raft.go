@@ -391,7 +391,7 @@ func (s *Store) SetRoom(RoomID string, room Room) {
 func (s *Store) GetRoom(RoomID string) Room {
 	var room Room
 	stringRoom, _ := s.Get(RoomID)
-	if stringRoom != "" {
+	if stringRoom == "" {
 		println("@@@@@@@!!!!!@@@@@@@@ sending an empty room")
 	}
 	byteRoom := []byte(stringRoom)
