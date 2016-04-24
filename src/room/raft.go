@@ -181,6 +181,7 @@ func (s *Store) Set(key string, value string) error {
 	if err, ok := f.(error); ok {
 		return err
 	}
+	time.Sleep(3000 * time.Millisecond)
 	return nil
 }
 
@@ -516,6 +517,7 @@ func (s *Store) SetChancellor(RoomID string, chanID string) {
 	println("Setting the chancellor for room " + RoomID)
 	room.ChancellorID = chanID
 	s.SetRoom(RoomID, room)
+	time.Sleep(3000 * time.Millisecond)
 	println("!!!!!!!!!!! Setting the room" + s.GetRoom(RoomID).ChancellorID + " @@@@@@@@ " + s.GetRoom(RoomID).CurrPlayers)
 }
 
@@ -715,9 +717,16 @@ func (s *Store) InvestigateRole(userID string) string {
 //RigElection ----Fascist Power: Set the next presidental choice
 func (s *Store) RigElection(RoomID string, userID string) {
 	room := s.GetRoom(userID)
-
+	for {
+		if room.RoomID == "" {
+			println("Waiting to get the room!!!!")
+			time.Sleep(3000 * time.Millisecond)
+			room = s.GetRoom(userID)
+		} else {
+			break
+		}
+	}
 	room.PresidentID = userID
-
 	s.SetRoom(RoomID, room)
 }
 
