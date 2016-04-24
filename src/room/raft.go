@@ -568,10 +568,7 @@ func (s *Store) DrawThree(RoomID string) string {
 func (s *Store) PassTwo(RoomID string, choice string) {
 
 	room := s.GetRoom(RoomID)
-
 	room.PresidentChoice = choice
-	room.VoteResult = -1
-
 	s.SetRoom(RoomID, room)
 }
 
