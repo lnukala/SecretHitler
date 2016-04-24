@@ -466,6 +466,8 @@ func GetServer() *APIServer {
 
 		println("Setting chancellor to " + userId[0])
 		room.RaftStore.SetChancellor("0", userId[0])
+		SendRoomUpdateChannel <- "run"
+		r.JSON(http.StatusOK, "")
 	})
 
 	//----Draw 3 cards
@@ -482,6 +484,7 @@ func GetServer() *APIServer {
 		cards := v["selected_cards"]
 
 		room.RaftStore.PassTwo("0", cards[0])
+		time.Sleep(3000 * time.Millisecond)
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -493,7 +496,7 @@ func GetServer() *APIServer {
 		card := v["selected_card"]
 
 		room.RaftStore.PlaySelected("0", card[0])
-		//TODO This should probably have its own channel
+	        time.Sleep(3000 * time.Millisecond)
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -623,7 +626,7 @@ func GetServer() *APIServer {
 			data[m["set_peer"].(string)] = m["video_id"].(string)
 			room.RaftStore.SetWebrtc(key, data)
 		} else {
-			data := make(map[string]string)
+			gata := make(map[string]string)
 			data[m["set_peer"].(string)] = m["video_id"].(string)
 			room.RaftStore.SetWebrtc(key, data)
 		}
