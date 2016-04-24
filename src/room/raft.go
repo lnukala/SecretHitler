@@ -716,12 +716,12 @@ func (s *Store) InvestigateRole(userID string) string {
 
 //RigElection ----Fascist Power: Set the next presidental choice
 func (s *Store) RigElection(RoomID string, userID string) {
-	room := s.GetRoom(userID)
+	room := s.GetRoom(RoomID)
 	for {
 		if room.RoomID == "" {
 			println("Waiting to get the room!!!!")
 			time.Sleep(3000 * time.Millisecond)
-			room = s.GetRoom(userID)
+			room = s.GetRoom(RoomID)
 		} else {
 			break
 		}
