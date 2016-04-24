@@ -198,8 +198,8 @@ func GetServer() *APIServer {
 				CardPlayed:                  "",
 			}
 			room.RaftStore.SetRoom(gameroom.RoomID, gameroom)
-			print("The room was updated to ")
-			println(room.RaftStore.GetRoom(gameroom.RoomID))
+			print("The room ID was updated to ")
+			println(room.RaftStore.GetRoom(gameroom.RoomID).RoomID)
 			room.RaftStore.Set("RoomID", gameroom.RoomID)
 		}
 		//Store user data into room raft
