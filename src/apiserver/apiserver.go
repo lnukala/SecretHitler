@@ -195,7 +195,7 @@ func GetServer() *APIServer {
 				ChancellorID:                "",
 				HungCount:                   0,
 				VoteResult:                  -1,
-				CardPlayed:                   "",
+				CardPlayed:                  "",
 			}
 			room.RaftStore.SetRoom(gameroom.RoomID, gameroom)
 			room.RaftStore.Set("RoomID", gameroom.RoomID)
@@ -496,7 +496,7 @@ func GetServer() *APIServer {
 		card := v["selected_card"]
 
 		room.RaftStore.PlaySelected("0", card[0])
-	        time.Sleep(3000 * time.Millisecond)
+		time.Sleep(3000 * time.Millisecond)
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
