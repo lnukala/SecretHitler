@@ -460,7 +460,7 @@ func GetServer() *APIServer {
 		userId := v["chancellor"]
 
 		room.RaftStore.SetChancellor("0", userId[0])
-		SendRoomUpdateChannel <- "run"
+		sendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -546,7 +546,7 @@ func GetServer() *APIServer {
 		v, _ := url.ParseQuery(string(body))
 		userId := v["0"]
 
-		room.RaftStore.KillUser(userId[0])
+		room.RaftStore.KillUser("0", userId[0])
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -585,6 +585,13 @@ func GetServer() *APIServer {
 		result := room.RaftStore.IsPresident(roomId)
 		r.JSON(http.StatusOK, map[string]interface{}{"isPresident": result})
 	})
+
+        //----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
+        singleServer.m.Post("/reset_round", func(req *http.Request, r render.Render) {
+                room.RaftStore.ResetRound("0")
+		SendRoomUpdateChannel <- "run"
+                r.JSON(http.StatusOK, "")
+        })
 
 	//----set the webrtc id for the handshake
 	singleServer.m.Post("/setwebrtcid", func(req *http.Request, r render.Render) {

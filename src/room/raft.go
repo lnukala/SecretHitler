@@ -62,6 +62,7 @@ type Room struct {
 	HungCount                   int
 	PresidentChoice             string
 	VoteResult		    int
+	DeadList		    string
 }
 
 //User : structure respresenting the user information stored
@@ -713,10 +714,16 @@ func (s *Store) RigElection(RoomID string, userID string) {
 }
 
 //KillUser ----Fascist Power: Kill a user, they no longer act in game.
-func (s *Store) KillUser(userID string) {
+func (s *Store) KillUser(RoomId string, userID string) {
+	room := s.GetRoom(RoomId)
 	user := s.GetUser(userID)
 
 	user.IsDead = true
+	if(strings.Compare(room.DeadList, "") == 0) {
+		room.DeadList = userID
+	} else {
+		room.DeadList += "," + userID
+	}
 
 	s.SetUser(userID, user)
 }
