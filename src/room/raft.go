@@ -556,7 +556,7 @@ func (s *Store) DrawThree(RoomID string) string {
 	return out
 }
 
-//PassTwo :
+//PassTwo :Pass two cards from the president
 func (s *Store) PassTwo(RoomID string, choice string) {
 
 	room := s.GetRoom(RoomID)
@@ -567,20 +567,13 @@ func (s *Store) PassTwo(RoomID string, choice string) {
 }
 
 //HangParliament ----Update the hung parliament counter. Return the count
-func (s *Store) HangParliament(RoomID string) string {
+func (s *Store) HangParlament(RoomID string) {
+
 	room := s.GetRoom(RoomID)
 	room.HungCount++
 
-	if room.HungCount == 3 {
-		room.HungCount = 0
-	}
-
 	s.SetRoom(RoomID, room)
 
-	if room.HungCount == 0 {
-		return "3"
-	}
-	return strconv.Itoa(room.HungCount)
 }
 
 //PlayRandom -----After hung parliament x3: play a random card off the deck
@@ -620,6 +613,9 @@ func (s *Store) PlaySelected(RoomID string, card string) {
 	} else {
 		room.FascistPoliciesPassed++
 	}
+
+	//----Also want to reset hungcount if we get here
+	room.HungCount = 0
 
 	s.SetRoom(RoomID, room)
 }
@@ -764,8 +760,8 @@ func (s *Store) IsHitlerChancellor(RoomID string) string {
 	return constants.InProgress
 }
 
-func (s *Store) IsPresident(roomId string) string {
-	room := s.GetRoom(roomId)
+func (s *Store) IsPresident(RoomId string) string {
+	room := s.GetRoom(RoomId)
 	println("@@@@@@@ IS PRESIDENT !!!")
 	println(room.PresidentID)
 	println(zmq.GetPublicIP())
@@ -774,4 +770,21 @@ func (s *Store) IsPresident(roomId string) string {
 		return "true"
 	}
 	return "false"
+}
+
+//ResetRound: Resets relevant room state between rounds 
+func (s * Store) ResetRound(RoomId string) {
+	room := s.GetRoom(RoomId)
+
+	//----Change to next president
+	s.SwitchPres(RoomId)
+
+	//----Reset Chancellor choice
+	room.ChancellorID = ""
+	//----Reset Vote Result
+	room.VoteResult = constants.NoVoteInt
+	//----Reset Last Chosen President Cards
+	room.PresidentChoice = ""
+
+	s.SetRoom(RoomId, room)
 }

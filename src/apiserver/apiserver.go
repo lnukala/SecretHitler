@@ -192,6 +192,7 @@ func GetServer() *APIServer {
 				CurrentFascistInDeck:        11,
 				CurrentLiberalInDeck:        6,
 				CurrentTotalInDeck:          17,
+				ChancellorID:		     "",
 				HungCount:                   0,
 				VoteResult:                  -1,
 			}
@@ -452,13 +453,6 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, map[string]interface{}{"president": president})
 	})
 
-	//----Set the president role to the next logical president
-	singleServer.m.Post("switchpresident", func(req *http.Request, r render.Render) {
-		//----TODO room id forced
-		room.RaftStore.SwitchPres("0")
-		r.JSON(http.StatusOK, "")
-	})
-
 	//----President can call this to set their choice for chancelor
 	singleServer.m.Post("/setchancellor", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
@@ -481,9 +475,10 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/passtwo", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
-		cards := v["1"]
+		cards := v["0"]
 
 		room.RaftStore.PassTwo("0", cards[0])
+		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -491,30 +486,27 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/playselected", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
-		card := v["1"]
+		card := v["0"]
 
-		room.RaftStore.PlaySelected(roomId[0], card[0])
+		room.RaftStore.PlaySelected("0", card[0])
+		//TODO This should probably have its own channel
+		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
 	//----If the vote for president/chancellor fails, increment the counter
 	singleServer.m.Post("/hangparlament", func(req *http.Request, r render.Render) {
-		body, _ := ioutil.ReadAll(req.Body)
-		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
 
-		count := room.RaftStore.GetPresident(roomId[0])
-		r.JSON(http.StatusOK, map[string]interface{}{"count": count})
+		room.RaftStore.HangParlament("0")
+		SendRoomUpdateChannel <- "run"
+		r.JSON(http.StatusOK, "")
 	})
 
 	//----Play a random card from the top of the deck
 	singleServer.m.Post("/playrandom", func(req *http.Request, r render.Render) {
-		body, _ := ioutil.ReadAll(req.Body)
-		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
 
-		room.RaftStore.PlayRandom(roomId[0])
+		room.RaftStore.PlayRandom("0")
+		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -531,11 +523,9 @@ func GetServer() *APIServer {
 
 	//----Investigate a user
 	singleServer.m.Post("/investigaterole", func(req *http.Request, r render.Render) {
-		body, _ := ioutil.ReadAll(req.Body)
-		v, _ := url.ParseQuery(string(body))
-		userId := v["0"]
 
-		result := room.RaftStore.InvestigateRole(userId[0])
+		result := room.RaftStore.InvestigateRole("0")
+		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, map[string]interface{}{"role": result})
 	})
 
@@ -543,10 +533,10 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/rigelection", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
-		userId := v["1"]
+		userId := v["0"]
 
-		room.RaftStore.RigElection(roomId[0], userId[0])
+		room.RaftStore.RigElection("0", userId[0])
+		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -557,36 +547,26 @@ func GetServer() *APIServer {
 		userId := v["0"]
 
 		room.RaftStore.KillUser(userId[0])
+		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
 	//----Check for a game over condition(0 if no winner, 1 if Liberals won, 2 if fascists won)
 	singleServer.m.Post("/isGameOver", func(req *http.Request, r render.Render) {
-		body, _ := ioutil.ReadAll(req.Body)
-		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
 
-		result := room.RaftStore.IsGameOver(roomId[0])
+		result := room.RaftStore.IsGameOver("0")
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
 	//----Special Case: Check after a kill if hitler is dead
 	singleServer.m.Post("/ishitlerdead", func(req *http.Request, r render.Render) {
-		body, _ := ioutil.ReadAll(req.Body)
-		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
-
-		result := room.RaftStore.IsHitlerDead(roomId[0])
+		result := room.RaftStore.IsHitlerDead("0")
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
 	//----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
 	singleServer.m.Post("/ishitlerchancelor", func(req *http.Request, r render.Render) {
-		body, _ := ioutil.ReadAll(req.Body)
-		v, _ := url.ParseQuery(string(body))
-		roomId := v["0"]
-
-		result := room.RaftStore.IsHitlerChancellor(roomId[0])
+		result := room.RaftStore.IsHitlerChancellor("0")
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
@@ -604,11 +584,6 @@ func GetServer() *APIServer {
 
 		result := room.RaftStore.IsPresident(roomId)
 		r.JSON(http.StatusOK, map[string]interface{}{"isPresident": result})
-	})
-
-	//----wait for a particlular string to be sent over the channel, then return
-	singleServer.m.Get("/wait", func(req *http.Request, r render.Render) {
-		r.JSON(http.StatusOK, "")
 	})
 
 	//----set the webrtc id for the handshake
