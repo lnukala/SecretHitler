@@ -61,9 +61,9 @@ type Room struct {
 	HitlerID                    string
 	HungCount                   int
 	PresidentChoice             string
-	VoteResult		    int
-	DeadList		    string
-	CardPlayed		    string
+	VoteResult                  int
+	DeadList                    string
+	CardPlayed                  string
 }
 
 //User : structure respresenting the user information stored
@@ -391,6 +391,9 @@ func (s *Store) SetRoom(RoomID string, room Room) {
 func (s *Store) GetRoom(RoomID string) Room {
 	var room Room
 	stringRoom, _ := s.Get(RoomID)
+	if stringRoom != "" {
+		println("@@@@@@@!!!!!@@@@@@@@ sending an empty room")
+	}
 	byteRoom := []byte(stringRoom)
 	json.Unmarshal(byteRoom, &room)
 	return room
@@ -638,10 +641,10 @@ func (s *Store) Vote(userID string, vote string) {
 }
 
 //VoteResults ----Returns the results: 1 is NEIN, 0 is YA
-func (s *Store) VoteResults(RoomID string) string{
+func (s *Store) VoteResults(RoomID string) string {
 	var count int
 
-	room:= s.GetRoom(RoomID)
+	room := s.GetRoom(RoomID)
 
 	userList, _ := ReadPeersJSON()
 	count = 0
@@ -649,7 +652,7 @@ func (s *Store) VoteResults(RoomID string) string{
 
 	for _, userString := range userList {
 		user := s.GetUser(userString)
-		if(user.Vote == constants.NoVoteInt) {
+		if user.Vote == constants.NoVoteInt {
 			return constants.NoVote
 		}
 		count += user.Vote
@@ -724,7 +727,7 @@ func (s *Store) KillUser(RoomId string, userID string) {
 	user := s.GetUser(userID)
 
 	user.IsDead = true
-	if(strings.Compare(room.DeadList, "") == 0) {
+	if strings.Compare(room.DeadList, "") == 0 {
 		room.DeadList = userID
 	} else {
 		room.DeadList += "," + userID
@@ -784,8 +787,8 @@ func (s *Store) IsPresident(RoomId string) string {
 	return "false"
 }
 
-//ResetRound: Resets relevant room state between rounds 
-func (s * Store) ResetRound(RoomId string) {
+//ResetRound: Resets relevant room state between rounds
+func (s *Store) ResetRound(RoomId string) {
 	room := s.GetRoom(RoomId)
 
 	//----Change to next president
