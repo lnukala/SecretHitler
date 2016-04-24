@@ -352,11 +352,12 @@ func IVotedUpdate() {
 func updateRoom() {
 	print("roomstate room id is ")
 	println(RoomState.RoomID)
-	roomObj := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
-	for roomObj.RoomID == "" {
-		println("waiting to get room info!!!!")
-		roomObj = room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
+	r, err := room.RaftStore.Get("RoomID")
+	if err != nil {
+		println(err.Error())
+		println("Error in get")
 	}
+	roomObj := room.RaftStore.GetRoom(r)
 	println("Getting room ID " + strconv.Itoa(RoomState.RoomID))
 	roomID, err := strconv.Atoi(roomObj.RoomID)
 	if err != nil {
