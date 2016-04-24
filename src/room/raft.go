@@ -181,6 +181,7 @@ func (s *Store) Set(key string, value string) error {
 	if err, ok := f.(error); ok {
 		return err
 	}
+	//time.Sleep(3000 * time.Millisecond)
 	return nil
 }
 
@@ -385,6 +386,7 @@ func (s *Store) SetRoom(RoomID string, room Room) {
 	byteRoom, _ := json.Marshal(room)
 	stringRoom := string(byteRoom)
 	s.Set(RoomID, stringRoom)
+	time.Sleep(3000 * time.Millisecond)
 }
 
 //GetRoom : get room details
@@ -513,10 +515,11 @@ func (s *Store) GetPresident(RoomID string) string {
 //SetChancellor ----Set a chancelor post-election
 func (s *Store) SetChancellor(RoomID string, chanID string) {
 	room := s.GetRoom(RoomID)
-
+	println("Setting the chancellor for room " + RoomID)
 	room.ChancellorID = chanID
-
 	s.SetRoom(RoomID, room)
+	time.Sleep(3000 * time.Millisecond)
+	println("!!!!!!!!!!! Setting the room" + s.GetRoom(RoomID).ChancellorID + " @@@@@@@@ " + s.GetRoom(RoomID).CurrPlayers)
 }
 
 //GetChancellor ----Get the chancellor's UID
@@ -566,9 +569,7 @@ func (s *Store) DrawThree(RoomID string) string {
 func (s *Store) PassTwo(RoomID string, choice string) {
 
 	room := s.GetRoom(RoomID)
-
 	room.PresidentChoice = choice
-
 	s.SetRoom(RoomID, room)
 }
 
@@ -623,7 +624,7 @@ func (s *Store) PlaySelected(RoomID string, card string) {
 		room.FascistPoliciesPassed++
 		room.CardPlayed = "7"
 	}
-
+	room.VoteResult = -1
 	//----Also want to reset hungcount if we get here
 	room.HungCount = 0
 
@@ -715,10 +716,17 @@ func (s *Store) InvestigateRole(userID string) string {
 
 //RigElection ----Fascist Power: Set the next presidental choice
 func (s *Store) RigElection(RoomID string, userID string) {
-	room := s.GetRoom(userID)
-
+	room := s.GetRoom(RoomID)
+	for {
+		if room.RoomID == "" {
+			println("Waiting to get the room!!!!")
+			time.Sleep(3000 * time.Millisecond)
+			room = s.GetRoom(RoomID)
+		} else {
+			break
+		}
+	}
 	room.PresidentID = userID
-
 	s.SetRoom(RoomID, room)
 }
 

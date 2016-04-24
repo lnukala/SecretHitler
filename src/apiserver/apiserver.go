@@ -465,10 +465,10 @@ func GetServer() *APIServer {
 		v, _ := url.ParseQuery(string(body))
 		userId := v["chancellor"]
 
-		time.Sleep(3000 * time.Millisecond)
-
 		println("Setting chancellor to " + userId[0])
 		room.RaftStore.SetChancellor("0", userId[0])
+
+		println("Waiting before telling others")
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -477,6 +477,7 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/drawthree", func(req *http.Request, r render.Render) {
 
 		cards := room.RaftStore.DrawThree("0")
+		println("Cards to be sent " + cards)
 		r.JSON(http.StatusOK, map[string]interface{}{"card_id": cards})
 	})
 
@@ -630,6 +631,7 @@ func GetServer() *APIServer {
 			room.RaftStore.SetWebrtc(key, data)
 		} else {
 			data := make(map[string]string)
+			println("Setting video ID: " + m["video_id"].(string))
 			data[m["set_peer"].(string)] = m["video_id"].(string)
 			room.RaftStore.SetWebrtc(key, data)
 		}
