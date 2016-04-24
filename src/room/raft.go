@@ -513,10 +513,10 @@ func (s *Store) GetPresident(RoomID string) string {
 //SetChancellor ----Set a chancelor post-election
 func (s *Store) SetChancellor(RoomID string, chanID string) {
 	room := s.GetRoom(RoomID)
-
+	println("Setting the chancellor for room " + RoomID)
 	room.ChancellorID = chanID
-
 	s.SetRoom(RoomID, room)
+	println("!!!!!!!!!!! Setting the room" + s.GetRoom(RoomID).ChancellorID + " @@@@@@@@ " + s.GetRoom(RoomID).CurrPlayers)
 }
 
 //GetChancellor ----Get the chancellor's UID

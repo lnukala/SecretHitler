@@ -465,10 +465,12 @@ func GetServer() *APIServer {
 		v, _ := url.ParseQuery(string(body))
 		userId := v["chancellor"]
 
-		time.Sleep(3000 * time.Millisecond)
-
 		println("Setting chancellor to " + userId[0])
 		room.RaftStore.SetChancellor("0", userId[0])
+
+		println("Waiting before telling others")
+		time.Sleep(3000 * time.Millisecond)
+
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
