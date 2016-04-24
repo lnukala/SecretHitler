@@ -631,6 +631,7 @@ func GetServer() *APIServer {
 			room.RaftStore.SetWebrtc(key, data)
 		} else {
 			data := make(map[string]string)
+			println("Setting video ID: " + m["video_id"].(string))
 			data[m["set_peer"].(string)] = m["video_id"].(string)
 			room.RaftStore.SetWebrtc(key, data)
 		}
