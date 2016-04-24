@@ -208,7 +208,7 @@ func Handle() {
 			raft.RaftStore.Join(params + ":5557")
 			zmq.ResponseChannel <- success
 		case "updateRoom":
-			request := urllib.Put("http://127.0.0.1:8000/update_room/")
+			request := urllib.Post("http://127.0.0.1:8000/update_room/")
 			roomObj := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
 
 			var new_roomjson = map[string]interface{}{
@@ -364,7 +364,7 @@ func updateRoom() {
 		"hung_count":                     roomObj.HungCount,
 		"president_choice":               roomObj.PresidentChoice,
 	}
-	request := urllib.Put("http://127.0.0.1:8000/update_room/")
+	request := urllib.Post("http://127.0.0.1:8000/update_room/")
 	request, err := request.JsonBody(new_roomjson)
 	if err != nil {
 		println(err.Error())
