@@ -625,6 +625,7 @@ func (s *Store) PlaySelected(RoomID string, card string) {
 		room.FascistPoliciesPassed++
 		room.CardPlayed = "7"
 	}
+	room.VoteResult = -1
 
 	//----Also want to reset hungcount if we get here
 	room.HungCount = 0
