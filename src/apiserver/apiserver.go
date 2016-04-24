@@ -469,7 +469,6 @@ func GetServer() *APIServer {
 		room.RaftStore.SetChancellor("0", userId[0])
 
 		println("Waiting before telling others")
-
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
