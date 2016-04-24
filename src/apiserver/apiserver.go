@@ -198,6 +198,7 @@ func GetServer() *APIServer {
 				CardPlayed:                  "",
 			}
 			room.RaftStore.SetRoom(gameroom.RoomID, gameroom)
+			time.Sleep(3000 * time.Millisecond)
 			print("The room ID was updated to ")
 			println(room.RaftStore.GetRoom(gameroom.RoomID).RoomID)
 			room.RaftStore.Set("RoomID", gameroom.RoomID)
