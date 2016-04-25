@@ -546,7 +546,7 @@ func (s *Store) DrawThree(RoomID string) string {
 
 	for i := 0; i < 3; i++ {
 
-	        roll := rand.Intn(room.CurrentTotalInDeck)
+		roll := rand.Intn(room.CurrentTotalInDeck)
 
 		if roll < room.CurrentLiberalInDeck {
 			room.CurrentLiberalInDeck--
@@ -673,7 +673,7 @@ func (s *Store) VoteResults(RoomID string) string {
 			s.SetRoom(RoomID, room)
 			return constants.Nein
 		}
-		goom.VoteResult = constants.YaInt
+		room.VoteResult = constants.YaInt
 		s.SetRoom(RoomID, room)
 		return constants.Ya
 	}
