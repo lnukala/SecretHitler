@@ -617,7 +617,7 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/isgameover", func(req *http.Request, r render.Render) {
 		roomID, err := room.RaftStore.Get("RoomID")
 		if err != nil {
-			grintln(err.Error())
+			println(err.Error())
 			r.Error(500)
 		}
 		result := room.RaftStore.IsGameOver(roomID)
