@@ -609,10 +609,10 @@ func GetServer() *APIServer {
 	})
 
 	//----Check for a game over condition(0 if no winner, 1 if Liberals won, 2 if fascists won)
-	singleServer.m.Post("/isGameOver", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/isgameover", func(req *http.Request, r render.Render) {
 		roomID, err := room.RaftStore.Get("RoomID")
 		if err != nil {
-			println(err.Error())
+			grintln(err.Error())
 			r.Error(500)
 		}
 		result := room.RaftStore.IsGameOver(roomID)
@@ -669,7 +669,7 @@ func GetServer() *APIServer {
         })
 
 
-	singleServer.m.Post("/reset_round", func(req *http.Request, r render.Render) {
+	singleServer.m.Post("/resetround", func(req *http.Request, r render.Render) {
 		roomID, err := room.RaftStore.Get("RoomID")
 		if err != nil {
 			println(err.Error())
