@@ -595,8 +595,8 @@ func GetServer() *APIServer {
 	})
 
 	//----The usual alternative to rig_election. Switches the president
-        singleServer.m.Post("/rigelection", func(req *http.Request, r render.Render) {
-                room.RaftStore.SwitchPresident("0")
+        singleServer.m.Post("/switchpresident", func(req *http.Request, r render.Render) {
+                room.RaftStore.SwitchPres("0")
                 r.JSON(http.StatusOK, "")
         })
 
