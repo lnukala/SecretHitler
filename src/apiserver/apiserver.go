@@ -158,7 +158,7 @@ func GetServer() *APIServer {
 		if err != nil {
 			println(err.Error())
 		}
-		time.Sleep(3000 * time.Millisecond)
+		time.Sleep(2000 * time.Millisecond)
 
 		println("<----------- Calling the get room")
 
@@ -178,7 +178,6 @@ func GetServer() *APIServer {
 		}
 		roomstate := raft.Room{}
 		json.Unmarshal(bytes, &roomstate)
-		time.Sleep(3000 * time.Millisecond)
 		println("<----------- Passing it to the others")
 		//calling the method to tell others you have joined
 		NewPlayerChannel <- roomstate
@@ -663,17 +662,16 @@ func GetServer() *APIServer {
 	})
 
 	//----The usual alternative to rig_election. Switches the president
-        singleServer.m.Post("/switchpresident", func(req *http.Request, r render.Render) {
-                roomID, err := room.RaftStore.Get("RoomID")
-                if err != nil {
-                        println(err.Error())
-                        r.Error(500)
-                }
+	singleServer.m.Post("/switchpresident", func(req *http.Request, r render.Render) {
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
 
-                room.RaftStore.SwitchPres(roomID)
-                r.JSON(http.StatusOK, "")
-        })
-
+		room.RaftStore.SwitchPres(roomID)
+		r.JSON(http.StatusOK, "")
+	})
 
 	singleServer.m.Post("/reset_round", func(req *http.Request, r render.Render) {
 		roomID, err := room.RaftStore.Get("RoomID")
