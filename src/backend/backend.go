@@ -298,6 +298,7 @@ func SendRoomUpdate() {
 		println(run)
 		roomObj := room.RaftStore.GetRoom(strconv.Itoa(RoomState.RoomID))
 		println("Telling everyone to update their rooms on the channel " + roomObj.GlobalComTopicName)
+		//time.Sleep(3000 * time.Millisecond)
 		Publish(roomObj.GlobalComTopicName, "updateRoom", "")
 		//updateRoom()
 	}

@@ -781,6 +781,7 @@ func (s *Store) IsHitlerChancellor(RoomID string) string {
 }
 
 func (s *Store) IsPresident(RoomId string) string {
+	time.Sleep(2000 * time.Millisecond)
 	room := s.GetRoom(RoomId)
 	println("@@@@@@@ IS PRESIDENT !!!")
 	println(room.PresidentID)
