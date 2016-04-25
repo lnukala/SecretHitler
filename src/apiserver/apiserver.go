@@ -488,7 +488,6 @@ func GetServer() *APIServer {
 		cards := v["selected_cards"]
 
 		room.RaftStore.PassTwo("0", cards[0])
-		time.Sleep(3000 * time.Millisecond)
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -500,7 +499,6 @@ func GetServer() *APIServer {
 		card := v["selected_card"]
 
 		room.RaftStore.PlaySelected("0", card[0])
-		time.Sleep(3000 * time.Millisecond)
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -581,7 +579,6 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
-	//----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
 	singleServer.m.Post("/ispresident", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
@@ -597,8 +594,15 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, map[string]interface{}{"isPresident": result})
 	})
 
-	//----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
-	singleServer.m.Post("/reset_round", func(req *http.Request, r render.Render) {
+	//----The usual alternative to rig_election. Switches the president
+        singleServer.m.Post("/rigelection", func(req *http.Request, r render.Render) {
+                room.RaftStore.SwitchPresident("0")
+                r.JSON(http.StatusOK, "")
+        })
+
+
+	//----Reset the round, setting all state flags back to starting values
+	singleServer.m.Post("/resetround", func(req *http.Request, r render.Render) {
 		room.RaftStore.ResetRound("0")
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")

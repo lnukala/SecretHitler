@@ -673,7 +673,7 @@ func (s *Store) VoteResults(RoomID string) string {
 			s.SetRoom(RoomID, room)
 			return constants.Nein
 		}
-		goom.VoteResult = constants.YaInt
+		room.VoteResult = constants.YaInt
 		s.SetRoom(RoomID, room)
 		return constants.Ya
 	}
@@ -799,9 +799,6 @@ func (s *Store) IsPresident(RoomId string) string {
 //ResetRound: Resets relevant room state between rounds
 func (s *Store) ResetRound(RoomId string) {
 	room := s.GetRoom(RoomId)
-
-	//----Change to next president
-	s.SwitchPres(RoomId)
 
 	//----Reset Chancellor choice
 	room.ChancellorID = ""
