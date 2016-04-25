@@ -158,7 +158,7 @@ func GetServer() *APIServer {
 		if err != nil {
 			println(err.Error())
 		}
-		time.Sleep(3000 * time.Millisecond)
+		time.Sleep(2000 * time.Millisecond)
 
 		println("<----------- Calling the get room")
 
@@ -178,7 +178,6 @@ func GetServer() *APIServer {
 		}
 		roomstate := raft.Room{}
 		json.Unmarshal(bytes, &roomstate)
-		time.Sleep(3000 * time.Millisecond)
 		println("<----------- Passing it to the others")
 		//calling the method to tell others you have joined
 		NewPlayerChannel <- roomstate
@@ -251,28 +250,34 @@ func GetServer() *APIServer {
 
 	// Register User
 	singleServer.m.Post("/getroom", func(req *http.Request, r render.Render) {
-		println("@@@@@@@@@@ <------------- Calling the get room")
-		peers, _ := room.ReadPeersJSON()
-		print("Number of people in current raft room are : ")
-		print(len(peers))
-		RoomState := raft.RaftStore.GetRoom(roomID)
-		println("@@@@@@@@@@ Getting the player")
+		roomID, _ := raft.RaftStore.Get("lastRoom")
+		if roomID == "" {
+			roomID = "0"
+		}
+		roomID_int, err := strconv.Atoi(roomID)
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+			return
+		}
+		RoomState := raft.RaftStore.GetRoom(roomID_int)
 		players := strings.Split(RoomState.CurrPlayers, ",")
 		if len(players) >= constants.MaxPlayers {
-			if roomID < math.MaxInt32 {
-				roomID = roomID + 1
+			if roomID_int < math.MaxInt32 {
+				roomID_int = roomID_int + 1
 			} else {
-				roomID = 0 //avoid overflow
+				roomID_int = 0 //avoid overflow
 			}
-			raft.RaftStore.Delete(strconv.Itoa(roomID))
-			RoomState = raft.RaftStore.GetRoom(roomID)
+			roomID = strconv.Itoa(roomID_int)
+			raft.RaftStore.Delete(roomID)
+			RoomState = raft.RaftStore.GetRoom(roomID_int)
 		}
-
+		raft.RaftStore.Set("lastRoom", roomID)
 		println("[LOGIN] @@@@@@@ Reading the data from the players")
 		//read the data from the player and add to the list of players stored
 		player := make(map[string]string)
 		body, _ := ioutil.ReadAll(req.Body)
-		err := json.Unmarshal(body, &player)
+		err = json.Unmarshal(body, &player)
 		if err != nil {
 			r.Error(500)
 		}
@@ -284,7 +289,7 @@ func GetServer() *APIServer {
 		println("[APISERVER] Current players in the room are " + RoomState.CurrPlayers)
 		jsonObj, _ := json.Marshal(RoomState)
 		roomstring := string(jsonObj)
-		raft.RaftStore.Set(strconv.Itoa(roomID), roomstring)
+		raft.RaftStore.Set(roomID, roomstring)
 
 		var roomjson = map[string]interface{}{
 			"room_id":                        RoomState.RoomID,
@@ -657,17 +662,16 @@ func GetServer() *APIServer {
 	})
 
 	//----The usual alternative to rig_election. Switches the president
-        singleServer.m.Post("/switchpresident", func(req *http.Request, r render.Render) {
-                roomID, err := room.RaftStore.Get("RoomID")
-                if err != nil {
-                        println(err.Error())
-                        r.Error(500)
-                }
+	singleServer.m.Post("/switchpresident", func(req *http.Request, r render.Render) {
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
 
-                room.RaftStore.SwitchPres(roomID)
-                r.JSON(http.StatusOK, "")
-        })
-
+		room.RaftStore.SwitchPres(roomID)
+		r.JSON(http.StatusOK, "")
+	})
 
 	singleServer.m.Post("/resetround", func(req *http.Request, r render.Render) {
 		roomID, err := room.RaftStore.Get("RoomID")
