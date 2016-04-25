@@ -4,6 +4,7 @@ import (
 	"constants"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"math"
 	"math/rand"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	"zmq"
 
 	"github.com/GiterLab/urllib"
+	"github.com/bogdanovich/dns_resolver"
 	"github.com/deckarep/golang-set"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/render"
@@ -120,6 +122,15 @@ func GetServer() *APIServer {
 			nodeType = "subnode"
 		}
 
+		resolver := dns_resolver.New([]string{"ns1.dnsimple.com", "ns2.dnsimple.com",
+			"ns3.dnsimple.com", "ns4.dnsimple.com"})
+		resolver.RetryTimes = 5
+		superip, err := resolver.LookupHost("secrethitler.lnukala.me")
+		if err != nil {
+			log.Fatal(err.Error())
+			r.Error(500)
+		}
+
 		//Creating the user json
 		var userjson = map[string]interface{}{"user_id": singleServer.uid,
 			"name": username, "user_type": -1, "node_type": nodeType,
@@ -128,8 +139,8 @@ func GetServer() *APIServer {
 			username + "," + "liberal" + "," + nodeType + "," + "hitler"
 		//Call the DNS to send the requet to a super node
 		println("[LOGIN] @@@@@@@ Calling the register user")
-		registerationrequest := urllib.Post("http://" + singleServer.attachedTo + ":3000/registeruser/")
-		registerationrequest, err := registerationrequest.JsonBody(registerationjson)
+		registerationrequest := urllib.Post("http://" + superip[0].String() + ":3000/registeruser/")
+		registerationrequest, err = registerationrequest.JsonBody(registerationjson)
 		if err != nil {
 			println(err.Error())
 			r.Error(500)
@@ -155,7 +166,7 @@ func GetServer() *APIServer {
 		player := make(map[string]string)
 		player["IP"] = zmq.GetPublicIP()
 		println("[LOGIN] @@@@@@@ Calling the get room")
-		roomrequest := urllib.Post("http://" + singleServer.attachedTo + ":3000/getroom/")
+		roomrequest := urllib.Post("http://" + superip[0].String() + ":3000/getroom/")
 		roomrequest, err = roomrequest.JsonBody(player)
 		if err != nil {
 			println(err.Error())
@@ -198,10 +209,8 @@ func GetServer() *APIServer {
 				CardPlayed:                  "",
 			}
 			room.RaftStore.SetRoom(gameroom.RoomID, gameroom)
-			time.Sleep(3000 * time.Millisecond)
-			print("The room ID was updated to ")
-			println(room.RaftStore.GetRoom(gameroom.RoomID).RoomID)
 			room.RaftStore.Set("RoomID", gameroom.RoomID)
+			//time.Sleep(3000 * time.Millisecond)
 		}
 		//Store user data into room raft
 		userdata := room.User{UserID: zmq.GetPublicIP(), NodeType: nodeType,
@@ -373,7 +382,12 @@ func GetServer() *APIServer {
 				println("reaching here to set the role for " + peers[i] + "as " + role)
 				room.RaftStore.SetRole(peers[i], role)
 			}
-			room.RaftStore.RigElection("0", zmq.GetPublicIP())
+			roomID, err := room.RaftStore.Get("RoomID")
+			if err != nil {
+				println(err.Error())
+				r.Error(500)
+			}
+			room.RaftStore.RigElection(roomID, zmq.GetPublicIP())
 		} else {
 			println("^^^^ Waiting for my role allocation!!!!!")
 			time.Sleep(3000 * time.Millisecond)
@@ -466,7 +480,12 @@ func GetServer() *APIServer {
 		userId := v["chancellor"]
 
 		println("Setting chancellor to " + userId[0])
-		room.RaftStore.SetChancellor("0", userId[0])
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		room.RaftStore.SetChancellor(roomID, userId[0])
 
 		println("Waiting before telling others")
 		SendRoomUpdateChannel <- "run"
@@ -475,8 +494,12 @@ func GetServer() *APIServer {
 
 	//----Draw 3 cards
 	singleServer.m.Post("/drawthree", func(req *http.Request, r render.Render) {
-
-		cards := room.RaftStore.DrawThree("0")
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		cards := room.RaftStore.DrawThree(roomID)
 		println("Cards to be sent " + cards)
 		r.JSON(http.StatusOK, map[string]interface{}{"card_id": cards})
 	})
@@ -487,7 +510,12 @@ func GetServer() *APIServer {
 		v, _ := url.ParseQuery(string(body))
 		cards := v["selected_cards"]
 
-		room.RaftStore.PassTwo("0", cards[0])
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		room.RaftStore.PassTwo(roomID, cards[0])
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -498,23 +526,36 @@ func GetServer() *APIServer {
 		v, _ := url.ParseQuery(string(body))
 		card := v["selected_card"]
 
-		room.RaftStore.PlaySelected("0", card[0])
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		room.RaftStore.PlaySelected(roomID, card[0])
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
 	//----If the vote for president/chancellor fails, increment the counter
 	singleServer.m.Post("/hangparlament", func(req *http.Request, r render.Render) {
-
-		room.RaftStore.HangParlament("0")
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		room.RaftStore.HangParlament(roomID)
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
 	//----Play a random card from the top of the deck
 	singleServer.m.Post("/playrandom", func(req *http.Request, r render.Render) {
-
-		room.RaftStore.PlayRandom("0")
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		room.RaftStore.PlayRandom(roomID)
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -532,7 +573,6 @@ func GetServer() *APIServer {
 
 	//----Investigate a user
 	singleServer.m.Post("/investigaterole", func(req *http.Request, r render.Render) {
-
 		result := room.RaftStore.InvestigateRole("0")
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, map[string]interface{}{"role": result})
@@ -543,8 +583,12 @@ func GetServer() *APIServer {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		userId := v["0"]
-
-		room.RaftStore.RigElection("0", userId[0])
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		room.RaftStore.RigElection(roomID, userId[0])
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -554,28 +598,46 @@ func GetServer() *APIServer {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		userId := v["0"]
-
-		room.RaftStore.KillUser("0", userId[0])
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		room.RaftStore.KillUser(roomID, userId[0])
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
 
 	//----Check for a game over condition(0 if no winner, 1 if Liberals won, 2 if fascists won)
 	singleServer.m.Post("/isGameOver", func(req *http.Request, r render.Render) {
-
-		result := room.RaftStore.IsGameOver("0")
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		result := room.RaftStore.IsGameOver(roomID)
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
 	//----Special Case: Check after a kill if hitler is dead
 	singleServer.m.Post("/ishitlerdead", func(req *http.Request, r render.Render) {
-		result := room.RaftStore.IsHitlerDead("0")
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		result := room.RaftStore.IsHitlerDead(roomID)
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
 	//----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
 	singleServer.m.Post("/ishitlerchancelor", func(req *http.Request, r render.Render) {
-		result := room.RaftStore.IsHitlerChancellor("0")
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		result := room.RaftStore.IsHitlerChancellor(roomID)
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
@@ -596,14 +658,24 @@ func GetServer() *APIServer {
 
 	//----The usual alternative to rig_election. Switches the president
         singleServer.m.Post("/switchpresident", func(req *http.Request, r render.Render) {
-                room.RaftStore.SwitchPres("0")
+                roomID, err := room.RaftStore.Get("RoomID")
+                if err != nil {
+                        println(err.Error())
+                        r.Error(500)
+                }
+
+                room.RaftStore.SwitchPres(roomID)
                 r.JSON(http.StatusOK, "")
         })
 
 
-	//----Reset the round, setting all state flags back to starting values
-	singleServer.m.Post("/resetround", func(req *http.Request, r render.Render) {
-		room.RaftStore.ResetRound("0")
+	singleServer.m.Post("/reset_round", func(req *http.Request, r render.Render) {
+		roomID, err := room.RaftStore.Get("RoomID")
+		if err != nil {
+			println(err.Error())
+			r.Error(500)
+		}
+		room.RaftStore.ResetRound(roomID)
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})

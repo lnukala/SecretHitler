@@ -546,7 +546,7 @@ func (s *Store) DrawThree(RoomID string) string {
 
 	for i := 0; i < 3; i++ {
 
-	        roll := rand.Intn(room.CurrentTotalInDeck)
+		roll := rand.Intn(room.CurrentTotalInDeck)
 
 		if roll < room.CurrentLiberalInDeck {
 			room.CurrentLiberalInDeck--

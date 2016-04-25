@@ -4,7 +4,7 @@ package constants
 const Delimiter = "!@#$%%$#@!"
 
 /*MaxSuperNumber : the upper limit of number of supernodes*/
-const MaxSuperNumber = 2
+const MaxSuperNumber = 3
 
 /*MaxPlayers : max number of player per team*/
 const MaxPlayers = 8
@@ -15,7 +15,7 @@ const Ya = "0"
 /*Nein : a no vote*/
 const Nein = "1"
 
-/*NoVote: player has not yet voted*/
+/*NoVote : player has not yet voted*/
 const NoVote = "-1"
 
 const YaInt = 0
