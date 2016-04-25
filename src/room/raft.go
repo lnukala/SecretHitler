@@ -473,6 +473,8 @@ func (s *Store) SwitchPres(RoomID string) {
 
 	room := s.GetRoom(RoomID)
 	stringArray, _ := ReadPeersJSON()
+	println("!!!!!!!!!!!!!!!!! The Peer List")
+	println(stringArray)
 
 	if strings.Compare(room.PresidentID, "") == 0 {
 		room.PresidentID = stringArray[0]
