@@ -379,6 +379,7 @@ func (s *Store) SetUser(userID string, user User) {
 	stringUser := string(byteUser)
 	println("calling set!")
 	s.Set(userID, stringUser)
+	time.Sleep(2000 * time.Millisecond)
 }
 
 //SetRoom : Convenience method: update room info at back
@@ -386,6 +387,7 @@ func (s *Store) SetRoom(RoomID string, room Room) {
 	byteRoom, _ := json.Marshal(room)
 	stringRoom := string(byteRoom)
 	s.Set(RoomID, stringRoom)
+	time.Sleep(3000 * time.Millisecond)
 }
 
 //GetRoom : get room details
@@ -520,7 +522,6 @@ func (s *Store) SetChancellor(RoomID string, chanID string) {
 //GetChancellor ----Get the chancellor's UID
 func (s *Store) GetChancellor(RoomID string) string {
 	room := s.GetRoom(RoomID)
-
 	return room.ChancellorID
 }
 
