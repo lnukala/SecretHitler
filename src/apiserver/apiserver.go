@@ -515,13 +515,13 @@ func GetServer() *APIServer {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		cards := v["selected_cards"]
+
 		roomID, err := room.RaftStore.Get("RoomID")
 		if err != nil {
 			println(err.Error())
 			r.Error(500)
 		}
 		room.RaftStore.PassTwo(roomID, cards[0])
-		time.Sleep(3000 * time.Millisecond)
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -531,13 +531,13 @@ func GetServer() *APIServer {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		card := v["selected_card"]
+
 		roomID, err := room.RaftStore.Get("RoomID")
 		if err != nil {
 			println(err.Error())
 			r.Error(500)
 		}
 		room.RaftStore.PlaySelected(roomID, card[0])
-		time.Sleep(3000 * time.Millisecond)
 		SendRoomUpdateChannel <- "run"
 		r.JSON(http.StatusOK, "")
 	})
@@ -647,7 +647,6 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
-	//----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
 	singleServer.m.Post("/ispresident", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
@@ -663,7 +662,19 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, map[string]interface{}{"isPresident": result})
 	})
 
-	//----Special case: Check after a successful vote if Hitler is chancelor with 3+ Policies enacted
+	//----The usual alternative to rig_election. Switches the president
+        singleServer.m.Post("/switchpresident", func(req *http.Request, r render.Render) {
+                roomID, err := room.RaftStore.Get("RoomID")
+                if err != nil {
+                        println(err.Error())
+                        r.Error(500)
+                }
+
+                room.RaftStore.SwitchPres(roomID)
+                r.JSON(http.StatusOK, "")
+        })
+
+
 	singleServer.m.Post("/reset_round", func(req *http.Request, r render.Render) {
 		roomID, err := room.RaftStore.Get("RoomID")
 		if err != nil {

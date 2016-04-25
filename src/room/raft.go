@@ -800,9 +800,6 @@ func (s *Store) IsPresident(RoomId string) string {
 func (s *Store) ResetRound(RoomId string) {
 	room := s.GetRoom(RoomId)
 
-	//----Change to next president
-	s.SwitchPres(RoomId)
-
 	//----Reset Chancellor choice
 	room.ChancellorID = ""
 	//----Reset Vote Result
