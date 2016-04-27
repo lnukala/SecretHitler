@@ -22,6 +22,7 @@ func main() {
 	go backend.HandleNewPlayer()
 	go backend.SendRoomUpdate()
 	go backend.IVotedUpdate()
+	go backend.HeartbeatReq()
 	isSuper := backend.Bootstrap(s)
 	//----TODO Integrate GetRoom as necessry
 	if isSuper { //----We only set up sn stuff if we're a sn

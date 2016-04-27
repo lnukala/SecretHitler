@@ -362,8 +362,16 @@ func updateRoom() {
 	}
 }
 
-//HeartBeat : heartbeat the IP to check if it is still alive
-func HeartBeat(IP string) {
+//HeartbeatReq : Listen for heart beat requests
+func HeartbeatReq() {
+	for {
+		IP := <-apiserver.HeartBeatRequestChannel
+		go heartBeat(IP)
+	}
+}
+
+//heartBeat : heartbeat the IP to check if it is still alive
+func heartBeat(IP string) {
 	count := 0
 	for {
 		if count >= 3 {

@@ -45,6 +45,9 @@ var IVotedChannel = make(chan string)
 //SendRoomChannel :pass "run" here to send update
 var SendRoomUpdateChannel = make(chan string)
 
+//SendRoomChannel :pass "run" here to send update
+var HeartBeatRequestChannel = make(chan string)
+
 //RoomID : The ID of the room being returned
 var roomID int
 
@@ -357,8 +360,13 @@ func GetServer() *APIServer {
 
 	//allocrole : called by leader when 8 players join. Only works in leader
 	singleServer.m.Post("/allocrole", func(req *http.Request, r render.Render) {
-		println("Coming here!!!!!!")
-		Firstround = false
+		if Firstround == true {
+			Firstround = false
+			peers, _ := room.ReadPeersJSON()
+			for _, peer := range peers {
+				HeartBeatRequestChannel <- peer
+			}
+		}
 		if room.RaftStore.IsLeader() == true {
 			println("I AM THE LEADER ALLOCATING ROLE!!!!!")
 			peers, err := room.ReadPeersJSON()
