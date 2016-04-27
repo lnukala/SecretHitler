@@ -80,6 +80,9 @@ type User struct {
 //RaftStore : Global variable exposed
 var RaftStore *Store
 
+//Bind : The bind used to bind to raft
+var Bind *raft.NetworkTransport
+
 //New : returns a new Store.
 func New() *Store {
 	return &Store{
@@ -106,10 +109,12 @@ func (s *Store) InitRoomRaft() error {
 	if err != nil {
 		return err
 	}
+
 	transport, err := raft.NewTCPTransport(raftbind, addr, 3, 10*time.Second, os.Stderr)
 	if err != nil {
 		return err
 	}
+	Bind = transport
 
 	// Create peer storage.
 	peerStore := raft.NewJSONPeers("roomdb", transport)
@@ -812,4 +817,11 @@ func (s *Store) ResetRound(RoomId string) {
 	room.CardPlayed = ""
 
 	s.SetRoom(RoomId, room)
+}
+
+//Close : close the current room raft
+func Close() error {
+	os.RemoveAll("roomdb")
+	err := Bind.Close()
+	return err
 }

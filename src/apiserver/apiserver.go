@@ -48,6 +48,9 @@ var SendRoomUpdateChannel = make(chan string)
 //RoomID : The ID of the room being returned
 var roomID int
 
+//Firstround : keeps track of if this is the first round of play
+var Firstround bool = true
+
 // RunServer : start the server
 func (s *APIServer) RunServer() {
 	s.m.Run()
@@ -355,6 +358,7 @@ func GetServer() *APIServer {
 	//allocrole : called by leader when 8 players join. Only works in leader
 	singleServer.m.Post("/allocrole", func(req *http.Request, r render.Render) {
 		println("Coming here!!!!!!")
+		Firstround = false
 		if room.RaftStore.IsLeader() == true {
 			println("I AM THE LEADER ALLOCATING ROLE!!!!!")
 			peers, err := room.ReadPeersJSON()

@@ -361,3 +361,29 @@ func updateRoom() {
 		request.String()
 	}
 }
+
+//HeartBeat : heartbeat the IP to check if it is still alive
+func HeartBeat(IP string) {
+	count := 0
+	for {
+		if count >= 3 {
+			break
+		}
+		url := "http://" + IP + ":3000/heartbeat"
+		fmt.Println(url)
+		_, err := http.Get(url)
+		if err != nil {
+			fmt.Println("Heart Beat failed to reach " + IP)
+			count = count + 1
+		} else {
+			count = 0
+		}
+		time.Sleep(5000 * time.Millisecond)
+	}
+	println("*********************Quitting the room raft as player has left/is not reachable*********************")
+	peers, _ := room.ReadPeersJSON()
+	for _, peer := range peers {
+		UnsubscribeTopic(peer, RoomState.GlobalComTopicName)
+	}
+	room.Close()
+}
