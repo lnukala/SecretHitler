@@ -331,7 +331,8 @@ func (f *fsmSnapshot) Release() {}
 //Close : shoutdown the raft session running for the game
 func (s *Store) Close() {
 	os.RemoveAll("roomdb") //delete the directory being used to store the data
-	s.raft.Shutdown()      //shut down the current raft session for the room
+	Bind.Close()
+	s.raft.Shutdown() //shut down the current raft session for the room
 }
 
 //ReadPeersJSON :read the peers in the game
