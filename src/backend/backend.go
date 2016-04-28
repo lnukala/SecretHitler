@@ -415,7 +415,7 @@ func heartBeat(IP string) {
 		} else {
 			count = 0
 		}
-		time.Sleep(5000 * time.Millisecond)
+		time.Sleep(1500 * time.Millisecond)
 	}
 	println("*********************Quitting the room raft as player has left/is not reachable*********************")
 	//tell everyone to unsubscribe from the room

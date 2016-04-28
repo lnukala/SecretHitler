@@ -339,6 +339,8 @@ func GetServer() *APIServer {
 			r.Error(500)
 		}
 		room.RaftStore.Set(data["key"], data["value"])
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -353,6 +355,8 @@ func GetServer() *APIServer {
 			r.Error(500)
 		}
 		raft.RaftStore.Set(data["key"], data["value"])
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -407,7 +411,8 @@ func GetServer() *APIServer {
 			println("^^^^ Waiting for my role allocation!!!!!")
 			time.Sleep(3000 * time.Millisecond)
 		}
-
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -432,6 +437,8 @@ func GetServer() *APIServer {
 			reply = "true"
 		}
 		var isleader = map[string]interface{}{"leader": reply}
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, isleader)
 	})
 
@@ -461,6 +468,10 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/getfascist", func(req *http.Request, r render.Render) {
 		fascist := room.RaftStore.GetFascist()
 		var fascistjson = map[string]interface{}{"fascist": fascist}
+		req.Close = true
+		req.Body.Close()
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, fascistjson)
 	})
 
@@ -468,6 +479,8 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/gethitler", func(req *http.Request, r render.Render) {
 		hitler := room.RaftStore.GetHitler()
 		var hitlerjson = map[string]interface{}{"hitler": hitler}
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, hitlerjson)
 	})
 
@@ -484,6 +497,8 @@ func GetServer() *APIServer {
 		}
 
 		president := room.RaftStore.GetPresident(roomId)
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, map[string]interface{}{"president": president})
 	})
 
@@ -504,6 +519,8 @@ func GetServer() *APIServer {
 
 		println("Waiting before telling others")
 		SendRoomUpdateChannel <- "run"
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -516,6 +533,8 @@ func GetServer() *APIServer {
 		}
 		cards := room.RaftStore.DrawThree(roomID)
 		println("Cards to be sent " + cards)
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, map[string]interface{}{"card_id": cards})
 	})
 
@@ -532,6 +551,8 @@ func GetServer() *APIServer {
 		}
 		room.RaftStore.PassTwo(roomID, cards[0])
 		SendRoomUpdateChannel <- "run"
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -548,6 +569,8 @@ func GetServer() *APIServer {
 		}
 		room.RaftStore.PlaySelected(roomID, card[0])
 		SendRoomUpdateChannel <- "run"
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -560,6 +583,8 @@ func GetServer() *APIServer {
 		}
 		room.RaftStore.HangParlament(roomID)
 		SendRoomUpdateChannel <- "run"
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -572,6 +597,8 @@ func GetServer() *APIServer {
 		}
 		room.RaftStore.PlayRandom(roomID)
 		SendRoomUpdateChannel <- "run"
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -583,6 +610,8 @@ func GetServer() *APIServer {
 
 		room.RaftStore.Vote(zmq.GetPublicIP(), vote[0])
 		IVotedChannel <- "voted"
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -590,6 +619,8 @@ func GetServer() *APIServer {
 	singleServer.m.Post("/investigaterole", func(req *http.Request, r render.Render) {
 		result := room.RaftStore.InvestigateRole("0")
 		SendRoomUpdateChannel <- "run"
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, map[string]interface{}{"role": result})
 	})
 
@@ -605,6 +636,8 @@ func GetServer() *APIServer {
 		}
 		room.RaftStore.RigElection(roomID, userId[0])
 		SendRoomUpdateChannel <- "run"
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -620,6 +653,8 @@ func GetServer() *APIServer {
 		}
 		room.RaftStore.KillUser(roomID, userId[0])
 		SendRoomUpdateChannel <- "run"
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -631,6 +666,8 @@ func GetServer() *APIServer {
 			r.Error(500)
 		}
 		result := room.RaftStore.IsGameOver(roomID)
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
@@ -642,6 +679,8 @@ func GetServer() *APIServer {
 			r.Error(500)
 		}
 		result := room.RaftStore.IsHitlerDead(roomID)
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
@@ -653,6 +692,8 @@ func GetServer() *APIServer {
 			r.Error(500)
 		}
 		result := room.RaftStore.IsHitlerChancellor(roomID)
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, map[string]interface{}{"results": result})
 	})
 
@@ -668,6 +709,8 @@ func GetServer() *APIServer {
 		}
 
 		result := room.RaftStore.IsPresident(roomId)
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, map[string]interface{}{"isPresident": result})
 	})
 
@@ -680,6 +723,8 @@ func GetServer() *APIServer {
 		}
 
 		room.RaftStore.SwitchPres(roomID)
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -691,6 +736,8 @@ func GetServer() *APIServer {
 		}
 		room.RaftStore.ResetRound(roomID)
 		SendRoomUpdateChannel <- "run"
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -701,6 +748,8 @@ func GetServer() *APIServer {
 		raft.RaftStore.Delete(ID)
 		println("Deleted the entry for the room ID " + ID)
 		time.Sleep(5000 * time.Millisecond)
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, "")
 	})
 
@@ -735,6 +784,8 @@ func GetServer() *APIServer {
 			data[m["set_peer"].(string)] = m["video_id"].(string)
 			room.RaftStore.SetWebrtc(key, data)
 		}
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, map[string]interface{}{"success": true})
 	})
 
@@ -747,8 +798,12 @@ func GetServer() *APIServer {
 		data := room.RaftStore.GetWebrtc(keyvalue)
 		if data == nil {
 			r.JSON(http.StatusOK, map[string]interface{}{"success": false})
+			req.Close = true
+			req.Body.Close()
 			return
 		}
+		req.Close = true
+		req.Body.Close()
 		r.JSON(http.StatusOK, map[string]interface{}{"success": true, "data": data})
 	})
 
