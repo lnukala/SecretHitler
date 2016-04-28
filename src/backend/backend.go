@@ -230,6 +230,7 @@ func Handle() {
 			room.RaftStore.Close()
 			time.Sleep(3000 * time.Millisecond)
 			RoomState = raft.Room{}
+			apiserver.Firstround = true
 			urllib.Post("http://127.0.0.1:8000/node_relogin/")
 			zmq.ResponseChannel <- success
 		default:
