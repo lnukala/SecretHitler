@@ -700,6 +700,7 @@ func GetServer() *APIServer {
 		json.Unmarshal(body, &ID)
 		raft.RaftStore.Delete(ID)
 		println("Deleted the entry for the room ID " + ID)
+		time.Sleep(5000 * time.Millisecond)
 		r.JSON(http.StatusOK, "")
 	})
 
