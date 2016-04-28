@@ -5,6 +5,7 @@ import (
 	"constants"
 	"dnsimple"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"raft"
@@ -16,6 +17,7 @@ import (
 	"zmq"
 
 	"github.com/GiterLab/urllib"
+	"github.com/bogdanovich/dns_resolver"
 	"github.com/deckarep/golang-set"
 )
 
@@ -230,8 +232,18 @@ func Handle() {
 			}
 			room.RaftStore.Close()
 			time.Sleep(3000 * time.Millisecond)
-			RoomState = raft.Room{}
 			apiserver.Firstround = true
+			resolver := dns_resolver.New([]string{"ns1.dnsimple.com", "ns2.dnsimple.com",
+				"ns3.dnsimple.com", "ns4.dnsimple.com"})
+			resolver.RetryTimes = 5
+			superip, err := resolver.LookupHost("secrethitler.lnukala.me")
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+			request = urllib.Post("http://" + superip[0].String() + ":3000/resetroom/")
+			request.JsonBody(strconv.Itoa(RoomState.RoomID))
+			request.String()
+			RoomState = raft.Room{}
 			request = urllib.Post("http://127.0.0.1:8000/node_relogin/")
 			request.String()
 			zmq.ResponseChannel <- success

@@ -696,6 +696,15 @@ func GetServer() *APIServer {
 		r.JSON(http.StatusOK, "")
 	})
 
+	singleServer.m.Post("/resetroom", func(req *http.Request, r render.Render) {
+		ID := ""
+		body, _ := ioutil.ReadAll(req.Body)
+		json.Unmarshal(body, &ID)
+		raft.RaftStore.Delete(ID)
+		println("Deleted the entry for the room ID " + ID)
+		r.JSON(http.StatusOK, "")
+	})
+
 	//----set the webrtc id for the handshake
 	singleServer.m.Post("/setwebrtcid", func(req *http.Request, r render.Render) {
 		body, _ := ioutil.ReadAll(req.Body)
