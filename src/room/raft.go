@@ -495,7 +495,7 @@ func (s *Store) SwitchPres(RoomID string) {
 		}
 
 		//Change this to 8 after testing
-		if i == 8 {
+		if i == 4 {
 			i = 0
 		}
 
