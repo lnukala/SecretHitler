@@ -221,7 +221,8 @@ func Handle() {
 		case "resetRoom":
 			println("Attempting to reset the room as a player has left the room!")
 			//tell the front end to stop updating
-			urllib.Post("http://127.0.0.1:8000/stop_refresh/")
+			request := urllib.Post("http://127.0.0.1:8000/stop_refresh/")
+			request.String()
 			//Unsubscribe from everyone on zeromq
 			peers, _ := room.ReadPeersJSON()
 			for _, peer := range peers {
@@ -231,7 +232,8 @@ func Handle() {
 			time.Sleep(3000 * time.Millisecond)
 			RoomState = raft.Room{}
 			apiserver.Firstround = true
-			urllib.Post("http://127.0.0.1:8000/node_relogin/")
+			request = urllib.Post("http://127.0.0.1:8000/node_relogin/")
+			request.String()
 			zmq.ResponseChannel <- success
 		default:
 			println("No logic added to handle this method. Please check!")
