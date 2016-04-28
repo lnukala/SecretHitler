@@ -232,7 +232,7 @@ func Handle() {
 			time.Sleep(3000 * time.Millisecond)
 			RoomState = raft.Room{}
 			apiserver.Firstround = true
-			request = urllib.Post("http://127.0.0.1:8000/node_relogin/")
+			request = urllib.Get("http://127.0.0.1:8000/node_relogin/")
 			request.String()
 			zmq.ResponseChannel <- success
 		default:
