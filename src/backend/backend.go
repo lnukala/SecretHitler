@@ -220,13 +220,18 @@ func Handle() {
 			zmq.ResponseChannel <- success
 		case "resetRoom":
 			println("Attempting to reset the room as a player has left the room!")
+			//tell the front end to stop updating
+			urllib.Post("http://127.0.0.1:8000/stop_refresh/")
 			//Unsubscribe from everyone on zeromq
 			peers, _ := room.ReadPeersJSON()
 			for _, peer := range peers {
 				UnsubscribeTopic(peer, RoomState.GlobalComTopicName)
 			}
-			//Close the current room raft
-			room.Close()
+			room.RaftStore.Close()
+			time.Sleep(3000 * time.Millisecond)
+			RoomState = raft.Room{}
+			urllib.Post("http://127.0.0.1:8000/node_relogin/")
+			zmq.ResponseChannel <- success
 		default:
 			println("No logic added to handle this method. Please check!")
 			zmq.ResponseChannel <- success
@@ -400,6 +405,7 @@ func heartBeat(IP string) {
 	println("*********************Quitting the room raft as player has left/is not reachable*********************")
 	//tell everyone to unsubscribe from the room
 	if room.RaftStore.IsLeader() == true {
+		println("Detected player loss at Leader! Telling everyone to update!")
 		Publish(RoomState.GlobalComTopicName, "resetRoom", "")
 	}
 }
