@@ -225,6 +225,7 @@ func Handle() {
 			//tell the front end to stop updating
 			request := urllib.Post("http://127.0.0.1:8000/stop_refresh/")
 			request.String()
+			apiserver.HeartBeat = false
 			//Unsubscribe from everyone on zeromq
 			peers, _ := room.ReadPeersJSON()
 			for _, peer := range peers {
@@ -402,7 +403,7 @@ func HeartbeatReq() {
 //heartBeat : heartbeat the IP to check if it is still alive
 func heartBeat(IP string) {
 	count := 0
-	for {
+	for apiserver.HeartBeat == true {
 		if count >= 3 {
 			break
 		}
@@ -418,6 +419,9 @@ func heartBeat(IP string) {
 		time.Sleep(1500 * time.Millisecond)
 	}
 	println("*********************Quitting the room raft as player has left/is not reachable*********************")
+	if apiserver.HeartBeat == false {
+		return
+	}
 	//tell everyone to unsubscribe from the room
 	if room.RaftStore.IsLeader() == true {
 		println("Detected player loss at Leader! Telling everyone to update!")

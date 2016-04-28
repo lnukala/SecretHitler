@@ -54,6 +54,8 @@ var HeartBeatQuitChannel = make(chan string)
 //RoomID : The ID of the room being returned
 var roomID int
 
+var HeartBeat bool = true
+
 //Firstround : keeps track of if this is the first round of play
 var Firstround bool = true
 
@@ -115,6 +117,7 @@ func GetServer() *APIServer {
 
 	// login  return json data including the succes information
 	singleServer.m.Post("/login", func(req *http.Request, r render.Render) {
+		HeartBeat = true
 		body, _ := ioutil.ReadAll(req.Body)
 		v, _ := url.ParseQuery(string(body))
 		var username string
