@@ -117,6 +117,7 @@ func (s *Store) InitRoomRaft() error {
 	Bind = transport
 
 	// Create peer storage.
+	println("Creating the roomdb directory")
 	peerStore := raft.NewJSONPeers("roomdb", transport)
 
 	// Create the snapshot store. This allows the Raft to truncate the log.

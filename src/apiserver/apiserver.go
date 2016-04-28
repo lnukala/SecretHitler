@@ -45,8 +45,11 @@ var IVotedChannel = make(chan string)
 //SendRoomChannel :pass "run" here to send update
 var SendRoomUpdateChannel = make(chan string)
 
-//SendRoomChannel :pass "run" here to send update
+//HeartBeatRequestChannel :pass "run" here to send update
 var HeartBeatRequestChannel = make(chan string)
+
+//HeartBeatQuitChannel :pass "run" here to send update
+var HeartBeatQuitChannel = make(chan string)
 
 //RoomID : The ID of the room being returned
 var roomID int
@@ -152,11 +155,6 @@ func GetServer() *APIServer {
 			r.Error(500)
 		}
 		registerationrequest.String()
-
-		//Initialize raft for the game that you are about to join
-		if room.RaftStore != nil {
-			room.RaftStore.Close() //If there is a session currently, close it
-		}
 
 		println("[LOGIN] @@@@@@@ Initialise the room raft")
 		room.RaftStore = room.New()
